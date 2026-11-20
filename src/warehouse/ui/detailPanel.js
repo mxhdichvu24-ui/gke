@@ -92,13 +92,13 @@ function button(act, iconName, label, active = false) {
   return `<button type="button" class="${cls}" data-act="${act}" title="${label}" aria-label="${label}"${active ? ' aria-pressed="true"' : ''}>${glyph}</button>`
 }
 
-function header({ illu, eyebrow, name, sub, buttons }) {
+function header({ illu, eyebrow, name, sub, buttons, mapUrl }) {
   return `<header class="dp-head">
     <div class="dp-head__tile">${illu}</div>
     <div class="dp-head__text">
       <div class="dp-eyebrow">${esc(eyebrow)}</div>
       <div class="dp-name">${esc(name)}</div>
-      <div class="dp-sub">${esc(sub)}</div>
+      <div class="dp-sub">${mapUrl?`<a href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;text-underline-offset:2px">${esc(sub)}</a>`:esc(sub)}</div>
     </div>
     <div class="dp-head__btns">${buttons.join('')}</div>
   </header>
@@ -172,9 +172,9 @@ function siteCard(site) {
     eyebrow: `${site.kind} · ${site.id}`,
     name: site.name,
     sub: site.address,
+    mapUrl: site.id==='WH-02'?dongAnhMapUrl:null,
     buttons,
   })
-    + (site.id==='WH-02'?`<a class="gke-map-link" href="${dongAnhMapUrl}" target="_blank" rel="noopener noreferrer">${document.documentElement.lang==='vi'?'Xem vị trí kho trên Google Maps':document.documentElement.lang==='zh'?'在 Google 地图中查看':'View location on Google Maps'} ↗</a>`:'')
     + status(site.status??'—', statusMeta('site', site.status).tone, siteActivityLine(site.id))
     + siteTiles(s)
     + section('Inventory', 'units')

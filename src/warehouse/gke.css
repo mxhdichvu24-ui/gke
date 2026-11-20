@@ -41,3 +41,11 @@ html,body{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{d
 }
 @media(max-width:360px){.gke-warehouse-toolbar{gap:7px;padding-left:9px;padding-right:9px}.gke-route-selector select{max-width:98px}.tb-site__badge{display:none}.tb-site__name{font-size:10px}}
 .gke-map-link{display:block;margin:0 15px 12px;color:#1867b1;font-size:11px;text-decoration:none}.gke-map-link:hover{text-decoration:underline}
+@media(max-width:650px){
+ .tb-site .tb-sitemenu{position:fixed;top:108px;left:10px;right:10px;width:auto;max-width:none;padding:5px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;border-radius:12px;background:#fff}
+ .tb-sitemenu .tb-sitemenu__row{height:38px;min-width:0;padding:4px 7px;gap:6px;border-radius:7px}
+ .tb-sitemenu .tb-sitemenu__row--all{grid-column:1/-1;height:34px;margin-bottom:0}
+ .tb-sitemenu .tb-sitemenu__row .site-badge{width:32px;min-width:32px;height:26px;border-radius:6px;font-size:9px}
+ .tb-sitemenu .tb-sitemenu__meta,.tb-sitemenu .tb-sitemenu__pct{display:none}
+ .tb-sitemenu .tb-sitemenu__name{font-size:11px;line-height:15px}
+}

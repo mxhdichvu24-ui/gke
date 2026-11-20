@@ -15,7 +15,7 @@ const optimizedMedia=JSON.parse(readFileSync('content/optimized-media.json','utf
 function optimizeImages(html){
  return html.replace(/<img\b[^>]*>/g,tag=>{
   const original=tag.match(/\bsrc="([^"]+)"/)?.[1],media=optimizedMedia[original];
-  if(media){tag=tag.replace(`src="${original}"`,`src="${media.src}"`);if(!/\bwidth=/.test(tag))tag=tag.replace('<img',`<img width="${media.width}" height="${media.height}"`);}
+  if(media)tag=tag.replace(`src="${original}"`,`src="${media.src}"`);
   const eager=original?.includes('1775110180_69ce082465d2c')||original?.includes('6a8ff001df543');
   if(!/\bloading=/.test(tag))tag=tag.replace('<img',`<img loading="${eager?'eager':'lazy'}"`);
   if(!/\bdecoding=/.test(tag))tag=tag.replace('<img','<img decoding="async"');

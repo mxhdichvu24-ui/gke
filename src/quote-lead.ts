@@ -1,4 +1,4 @@
-import {sendEnquiry,showEnquiryError,clearEnquiryErrors} from './contact-feedback';
+import {sendEnquiry,showEnquiryError,clearEnquiryErrors,showEnquirySuccess} from './contact-feedback';
 import {normalizePhone} from './contact-validation.mjs';
 const form=document.querySelector<HTMLFormElement>('#quote-lead-form')!;
 const status=document.querySelector('#quote-lead-status')!;
@@ -20,6 +20,6 @@ form.addEventListener('submit',async event=>{
  const payload={...data,consent:data.consent==='on',type:'parcel',locale:lang,packages:sizes.every(Boolean)?[{weight:data.weight,length:data.length,width:data.width,height:data.height,count:Number(data.count)}]:undefined};
  const serial=JSON.stringify(payload);if(previous!==serial){key=crypto.randomUUID();previous=serial;}
  status.textContent=t('Sending…','Đang gửi…','正在提交…');
- try{const result=await sendEnquiry({...payload,key});status.textContent=t('Request received. Reference: ','Đã nhận yêu cầu. Mã: ','已收到申请，编号：')+result.reference;form.reset();filter();previous='';}
+ try{await sendEnquiry({...payload,key});form.reset();filter();previous='';showEnquirySuccess(form,status);}
  catch(error){showEnquiryError(form,status,error);}finally{button.disabled=false;}
 });

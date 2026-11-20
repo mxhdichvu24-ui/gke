@@ -1,6 +1,6 @@
 import {enhanceDestinations} from './destination-picker';
 import {defaultSettings} from './site-defaults.mjs';
-import {sendEnquiry,showEnquiryError,clearEnquiryErrors} from './contact-feedback';
+import {sendEnquiry,showEnquiryError,clearEnquiryErrors,showEnquirySuccess} from './contact-feedback';
 import {normalizePhone} from './contact-validation.mjs';
 const locale = document.documentElement.lang;
 const vi = locale === 'vi', zh = locale === 'zh';
@@ -32,9 +32,8 @@ contact?.addEventListener('submit',async event=>{
   if(serial!==previous)payloadKey=crypto.randomUUID();previous=serial;
   button.disabled=true;status!.textContent=t('Sending…','Đang gửi…','提交中…');
   try{
-    const result=await sendEnquiry({...payload,key:payloadKey});
-    status!.textContent=t('Enquiry received. Reference ','Đã nhận yêu cầu. Mã ','咨询已收到。参考编号 ')+result.reference;
-    contact.reset();previous='';
+    await sendEnquiry({...payload,key:payloadKey});
+    contact.reset();previous='';showEnquirySuccess(contact,status!);
   }catch(error){showEnquiryError(contact,status!,error);}
   finally{button.disabled=false;}
 });

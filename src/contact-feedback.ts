@@ -23,6 +23,21 @@ export function showEnquiryError(form:HTMLFormElement,status:Element,error:any){
  const field=form.querySelector<HTMLElement>('[aria-invalid="true"]');field?.focus();
 }
 export function clearEnquiryErrors(form:HTMLFormElement){for(const field of form.querySelectorAll('[aria-invalid]'))field.removeAttribute('aria-invalid');}
+export function showEnquirySuccess(form:HTMLFormElement,status:Element){
+ const copy=document.documentElement.lang==='vi'
+  ?['Gửi yêu cầu thành công!','GKE đã nhận thông tin và sẽ sớm liên hệ tư vấn cho bạn.','Gửi yêu cầu khác']
+  :document.documentElement.lang==='zh'
+  ?['提交成功！','GKE 已收到您的信息，将尽快联系您提供咨询。','提交其他申请']
+  :['Request sent successfully!','GKE has received your details. Our team will contact you soon.','Send another request'];
+ const hidden=Array.from(form.children).filter(child=>child!==status).map(child=>({element:child as HTMLElement,wasHidden:(child as HTMLElement).hidden}));
+ hidden.forEach(({element})=>{element.hidden=true;});
+ status.classList.add('gke-form-success');status.setAttribute('tabindex','-1');
+ status.innerHTML=`<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="#11975b"/><path d="m13 24 8 8 15-16" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>${copy[0]}</h2><p>${copy[1]}</p><button type="button">${copy[2]}</button>`;
+ status.querySelector('button')!.addEventListener('click',()=>{
+  hidden.forEach(({element,wasHidden})=>{element.hidden=wasHidden;});status.classList.remove('gke-form-success');status.removeAttribute('tabindex');status.textContent='';form.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+ });
+ const panel=status as HTMLElement;panel.focus({preventScroll:true});panel.scrollIntoView({block:'center',behavior:'smooth'});
+}
 export async function sendEnquiry(payload:unknown){
  const response=await fetch('/api/quote-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(20000)});
  const result=await response.json();

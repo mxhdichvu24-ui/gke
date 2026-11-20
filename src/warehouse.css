@@ -1,0 +1,242 @@
+#warehouse {
+  --wh-ink: #102d45;
+  --wh-secondary: #405b70;
+  --wh-border: #c9dce8;
+  --wh-blue: #1266a4;
+  --wh-sky: #e6f1f7;
+  width: min(100% - 48px, 1440px);
+  max-width: none;
+  margin: 0 auto 56px;
+  padding: clamp(95px, 12vw, 145px) 0 0;
+  color: var(--wh-ink);
+  font-family: Inter, system-ui, sans-serif;
+}
+#warehouse [hidden] { display: none !important; }
+#warehouse button {
+  width: auto;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  line-height: 1.2;
+  text-transform: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+#warehouse button:focus-visible, #warehouse a:focus-visible { outline: 3px solid #074e87; outline-offset: 3px; }
+#warehouse button:disabled { cursor: default; opacity: .5; }
+.wh-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 22px;
+}
+#warehouse .wh-heading h1 {
+  margin: 8px 0 10px;
+  color: var(--wh-ink);
+  font-size: clamp(2.25rem, 4.4vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -.045em;
+  text-transform: none;
+}
+.wh-label {
+  display: inline-block;
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: #e4f3fc;
+  color: #125d93;
+  font-size: .77rem;
+  font-weight: 750;
+}
+.wh-intro { max-width: 62ch; margin: 0; color: var(--wh-secondary); font-size: .98rem; }
+.wh-routes {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  border: 1px solid var(--wh-border);
+  border-radius: 9px;
+  padding: 4px;
+  background: #eaf3f8;
+}
+#warehouse .wh-routes button {
+  min-width: 69px;
+  min-height: 40px;
+  padding: 8px 13px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+#warehouse .wh-routes button[aria-pressed='true'],
+#warehouse .wh-play {
+  color: white;
+  background: var(--wh-blue);
+}
+.wh-workspace {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 560px;
+  aspect-ratio: 16 / 10;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: min-content 1fr min-content;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--wh-border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--wh-sky);
+}
+.wh-viewport {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: var(--wh-sky);
+}
+.wh-still, .wh-canvas, .wh-canvas canvas, .wh-markers { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wh-still { object-fit: fill; display: block; }
+.wh-canvas { visibility: hidden; }
+.wh-has-scene .wh-canvas { visibility: visible; }
+.wh-has-scene .wh-still { visibility: hidden; }
+.wh-markers { pointer-events: none; }
+#warehouse .wh-markers button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 34px;
+  min-height: 34px;
+  padding: 2px;
+  background: #fff;
+  color: #1c699e;
+  border: 2px solid #4384af;
+  border-radius: 50%;
+  pointer-events: auto;
+  font-size: .8rem;
+  box-shadow: 0 2px 5px #24475b35;
+}
+#warehouse .wh-markers button[aria-pressed='true'] { border-color: #074e87; background: #074e87; color: white; }
+.wh-panel, .wh-kpi {
+  border: 1px solid #c8d9e5;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 3px 12px #27425712;
+}
+.wh-kpis { grid-area: 1 / 1; display: flex; flex-wrap: wrap; align-self: start; gap: 7px; width: fit-content; }
+.wh-kpi { display: flex; flex-direction: column; gap: 3px; min-width: 94px; padding: 9px 10px; }
+.wh-kpi strong { font-size: 1.34rem; line-height: 1.12; color: #115f96; }
+.wh-kpi span { color: var(--wh-secondary); font-size: .71rem; line-height: 1.2; }
+.wh-zone { grid-area: 1 / 2; align-self: start; width: 265px; padding: 13px 14px; }
+.wh-zone-copy { min-height: 108px; }
+.wh-caption { display: flex; justify-content: space-between; gap: 6px; }
+#warehouse .wh-caption { margin: 0 0 7px; color: var(--wh-secondary); font-size: .72rem; font-weight: 650; }
+.wh-facility { color: #1266a4; }
+#warehouse .wh-panel h2 {
+  margin: 0 0 7px;
+  color: var(--wh-ink);
+  font-size: .95rem;
+  line-height: 1.2;
+  font-weight: 750;
+  text-transform: none;
+}
+#warehouse .wh-zone-description { margin: 0 0 5px; color: var(--wh-secondary); font-size: .78rem; line-height: 1.43; }
+#warehouse .wh-services { display: inline-block; color: #125d93; font-size: .75rem; font-weight: 700; text-decoration: underline; }
+.wh-views { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 9px; border-top: 1px solid #e3edf3; }
+#warehouse .wh-views button, #warehouse .wh-reset, #warehouse .wh-zoom button {
+  min-height: 31px;
+  border: 1px solid var(--wh-border);
+  border-radius: 5px;
+  padding: 5px 7px;
+  background: #fff;
+  font-size: .72rem;
+}
+#warehouse .wh-views button:not(:disabled):hover,
+#warehouse .wh-reset:not(:disabled):hover,
+#warehouse .wh-zoom button:not(:disabled):hover { background: #eaf4fa; }
+.wh-actions { grid-area: 2 / 1 / 3 / 3; justify-self: start; align-self: end; display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+#warehouse .wh-play {
+  display: inline-flex;
+  min-height: 37px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--wh-blue);
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: .81rem;
+}
+#warehouse .wh-play:hover { background: #074e87; }
+#warehouse .wh-reset { min-height: 37px; padding-inline: 9px; }
+.wh-zoom { display: flex; gap: 4px; }
+#warehouse .wh-zoom button { min-width: 33px; min-height: 37px; font-size: .97rem; }
+.wh-render-status { color: var(--wh-secondary); border-radius: 4px; background: #fff; font-size: .73rem; }
+.wh-render-status:not(:empty) { padding: 5px 7px; }
+.wh-timeline { grid-area: 3 / 1; align-self: end; justify-self: start; padding: 13px; }
+.wh-timeline ol, .wh-vehicles ul { padding: 0; margin: 0; list-style: none; }
+.wh-timeline ol { display: grid; grid-template-columns: repeat(4, minmax(65px, 104px)); gap: 5px; }
+#warehouse .wh-timeline button {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 5px;
+  min-height: 66px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #e0eaf0;
+  border-radius: 5px;
+  padding: 6px;
+  background: #f5f9fb;
+  color: #314d63;
+  text-align: start;
+  font-size: .72rem;
+  line-height: 1.25;
+}
+#warehouse .wh-timeline button[aria-current='step'] {
+  color: #0d4f81;
+  border-color: #78b5d9;
+  background: #eaf6fe;
+}
+.wh-step-number {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: #d7e9f4;
+  color: #195d8f;
+}
+.wh-timeline [aria-current] .wh-step-number { background: #1266a4; color: #fff; }
+.wh-vehicles { grid-area: 3 / 2; align-self: end; justify-self: end; width: 245px; padding: 12px; }
+.wh-vehicles li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; color: var(--wh-secondary); font-size: .74rem; }
+.wh-vehicles li + li { border-top: 1px solid #e3edf3; }
+.wh-vehicle-status { color: #126086; text-align: end; }
+@media (max-width: 950px) {
+  #warehouse { width: min(100% - 32px, 1440px); }
+  .wh-workspace {
+    aspect-ratio: auto;
+    min-height: auto;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    background: #f2f8fc;
+  }
+  .wh-viewport { position: relative; z-index: 0; aspect-ratio: 8 / 5; grid-area: auto; grid-column: 1 / -1; overflow: hidden; border-radius: 9px; }
+  .wh-actions, .wh-kpis, .wh-timeline { grid-area: auto; grid-column: 1 / -1; }
+  .wh-zone, .wh-vehicles { grid-area: auto; width: 100%; align-self: start; }
+  .wh-kpis { width: 100%; }
+  .wh-kpi { flex: 1 1 auto; }
+  .wh-timeline { width: 100%; }
+  .wh-timeline ol { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wh-actions { order: 1; }
+  .wh-timeline { order: 2; }
+  .wh-kpis { order: 3; }
+  .wh-zone, .wh-vehicles { order: 4; }
+}
+@media (max-width: 540px) {
+  .wh-heading { align-items: start; flex-direction: column; }
+  .wh-workspace { grid-template-columns: 1fr; padding: 9px; gap: 9px; }
+  .wh-viewport { aspect-ratio: 4 / 3; }
+  .wh-still { object-fit: contain; }
+  .wh-viewport:not(.wh-has-scene) .wh-markers { inset-block: 8.333%; height: 83.334%; }
+  .wh-zone-copy { min-height: auto; }
+  #warehouse .wh-markers button { min-width: 30px; min-height: 30px; }
+  .wh-kpi { min-width: 84px; }
+}

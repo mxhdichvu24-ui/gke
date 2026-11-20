@@ -1,0 +1,37 @@
+{
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/warehouse-3d",
+      "destination": "/gke-3d",
+      "permanent": false
+    },
+    {
+      "source": "/vi/kho-3d",
+      "destination": "/vi/gke-3d",
+      "permanent": false
+    },
+    {
+      "source": "/zh/warehouse-3d",
+      "destination": "/zh/gke-3d",
+      "permanent": false
+    }
+  ]
+}

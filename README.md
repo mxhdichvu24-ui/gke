@@ -10,7 +10,7 @@ Yêu cầu Node.js 22.12 trở lên.
 npm ci
 npm run check
 npm run build
-GKE_DEMO_RATES=1 npm run dev
+GKE_DEMO_RATES=0 npm run dev
 ```
 
 | English | Tiếng Việt | 中文 |
@@ -29,7 +29,7 @@ GKE_DEMO_RATES=1 npm run dev
 ## Vercel Preview
 
 1. Kết nối repo `mxhdichvu24-ui/gke` với project Vercel dành riêng cho GKE. Chọn Vite, thư mục gốc repo, lệnh `npm run build`, thư mục đầu ra `dist`.
-2. Đặt `GKE_DEMO_RATES=1` cho Preview. Môi trường Production luôn vô hiệu hóa bảng mô phỏng. Giữ `GKE_INDEXING=0` ở Preview. Chỉ đặt `SITE_URL` và bật `GKE_INDEXING=1` cho domain chính thức đã duyệt.
+2. Đặt `GKE_DEMO_RATES=0` cho Preview. Môi trường Production luôn vô hiệu hóa bảng mô phỏng. Giữ `GKE_INDEXING=0` ở Preview. Chỉ đặt `SITE_URL` và bật `GKE_INDEXING=1` cho domain chính thức đã duyệt.
 3. Kiểm tra cả 12 đường dẫn. Xác minh `POST /api/shipping-estimates` trên Preview trả **520.000 VND** cho Economy, 2 kg, 40 × 30 × 20 cm. Kiểm tra trang chủ không tải Three.js và đường dẫn Track mở được trên thiết bị thật.
 4. Kiểm tra các điểm tương tác, đổi Mỹ/Anh khi cảnh đang phát, ảnh tĩnh, chế độ giảm chuyển động, zoom, Safari iPhone và Chrome Android. Ghi tên thiết bị, mạng và FPS.
 5. Nếu cần quay lui, chọn deployment đã qua nghiệm thu trước đó trong Vercel và redeploy hoặc khôi phục alias trong đúng môi trường. Giữ bản sao cơ sở dữ liệu trước thay đổi migration có dữ liệu thật.
@@ -64,3 +64,9 @@ Bảng giá thương mại và quy tắc cước GKE chưa được bàn giao. C
 ## Giao diện quản trị
 
 Admin hỗ trợ English / Tiếng Việt từ bộ chọn góc trên bên phải, ghi nhớ ngôn ngữ trên trình duyệt và giữ dữ liệu biểu mẫu đang nhập khi đổi ngôn ngữ. Menu, bộ lọc, trạng thái, nhãn thông tin và thông báo đều có bản dịch. Logo chữ xanh đậm được đặt trên nền trắng; bố cục quản trị có sidebar, thẻ thống kê và tab riêng cho ba địa điểm GKE. Đã kiểm tra bố cục desktop và màn hình 390px.
+
+## Current delivery
+
+The public quotation page is a contact request form. Synthetic tariffs are restricted to internal tests and are never returned by the public API. Admin reports use saved enquiries only; empty datasets show empty states. GKE 3D has four locations: Hoang Mai, Dong Anh, Ho Chi Minh and Da Nang. Missing operating figures remain null, the Vietnam clock uses current time, and saved figures refresh every 15 seconds. The original GKE footer structure, service links, maps and social icons are retained.
+
+Cloud setup: Supabase project awkaekyfsjdfxsfsgvwr has the GKE schema; Vercel project gke belongs to mxhdichvu24-ui. Server keys must be set in Vercel environment settings.

@@ -34,6 +34,11 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  const received=await call(quote,'','POST',data);assert.equal(received.status,201);
  const again=await call(quote,'','POST',data);assert.equal(again.body().reference,received.body().reference);
  const contacts=await call(admin,'contacts','GET',undefined,cookie);assert.equal(contacts.body().total,1);
+ assert.equal(contacts.body().scopeRows.length,1);
+ assert.equal((await call(admin,'contacts','PATCH',{reference:received.body().reference,status:'contacted',notes:'Local test update'},cookie)).status,200);
+ const filtered=(await call(admin,'contacts&status=received','GET',undefined,cookie)).body();
+ assert.equal(filtered.total,0);assert.equal(filtered.scopeTotal,1);assert.equal(filtered.counts.contacted,1);
+ assert.equal(filtered.scopeRows[0].status,'contacted');
  const output=await call(admin,'export','GET',undefined,cookie);assert.equal(output.status,200);assert.ok(output.text.includes("'=CSV safety test"));
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password:'incorrect'})).status,401);
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password})).status,200);

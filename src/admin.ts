@@ -1,4 +1,4 @@
-import {overview,enquiries,website,gke,searchContacts} from './admin-workspace';
+import {overview,enquiries,website,gke,searchContacts,invalidateContacts} from './admin-workspace';
 import {adminText,type AdminLanguage} from './admin-i18n';
 import './admin.css';
 const root=document.querySelector<HTMLElement>('#admin-app')!;
@@ -7,7 +7,9 @@ let language:AdminLanguage=localStorage.getItem('gke-admin-language')==='vi'?'vi
 const t=(text:string)=>adminText(language,text);
 let currentSection='dashboard';
 let relocalizing=false;
-const readCache=new Map<string,any>();
+const readCache=new Map<string,{value:any,at:number}>();
+const pendingReads=new Map<string,Promise<any>>();
+let cacheGeneration=0;
 const sections:Record<string,string>={dashboard:'Overview',contacts:'Customer enquiries',settings:'Website content',warehouse:'GKE 3D data'};
 const paths:Record<string,string>={dashboard:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',contacts:'M21 11a8 8 0 0 1-8 8H5l-4 3V11a10 10 0 0 1 20 0Z M7 10h8 M7 14h5',settings:'M4 3h16v18H4z M8 7h8 M8 11h8 M8 15h5',warehouse:'m3 8 9-5 9 5v10l-9 5-9-5V8Z m0 0 9 5 9-5 M12 13v10',external:'M14 3h7v7 M21 3l-11 11 M10 3H3v18h18v-7',logout:'M9 3H3v18h6 M13 7l5 5-5 5 M7 12h11',globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3c-5 5-5 13 0 18 5-5 5-13 0-18'};
 const icon=(name:string)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.settings}"/></svg>`;
@@ -19,9 +21,18 @@ const options=(values:string[],selected:string)=>values.map(value=>`<option valu
 const locale=()=>language==='vi'?'vi-VN':'en-GB';
 const date=(value:string)=>new Date(value).toLocaleString(locale());
 async function request(action:string,method='GET',body?:unknown){
- if(method==='GET'&&relocalizing&&readCache.has(action))return structuredClone(readCache.get(action));
- const r=await fetch('/api/admin?action='+action,{method,headers:body?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{})});
- const data=await r.json();if(!r.ok)throw new Error(data.code||'Request failed');if(method==='GET')readCache.set(action,data);else readCache.clear();return data;
+ const cached=readCache.get(action);
+ if(method==='GET'&&cached&&(relocalizing||Date.now()-cached.at<15000))return structuredClone(cached.value);
+ if(method==='GET'&&pendingReads.has(action))return structuredClone(await pendingReads.get(action));
+ const generation=cacheGeneration;
+ const task=(async()=>{
+  const r=await fetch('/api/admin?action='+action,{method,signal:AbortSignal.timeout(15000),headers:body?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{})});
+  const data=await r.json();if(!r.ok){if(r.status===401){readCache.clear();invalidateContacts();}throw new Error(data.code||'Request failed');}
+  if(method==='GET'){if(generation===cacheGeneration)readCache.set(action,{value:data,at:Date.now()});}else{cacheGeneration++;readCache.clear();pendingReads.clear();invalidateContacts();}
+  return data;
+ })();
+ if(method==='GET')pendingReads.set(action,task);
+ try{return structuredClone(await task);}finally{if(method==='GET'&&pendingReads.get(action)===task)pendingReads.delete(action);}
 }
 function bindLanguage(){
  root.querySelector<HTMLSelectElement>('#admin-language')!.addEventListener('change',async event=>{
@@ -58,7 +69,7 @@ async function section(name:string){
  currentSection=name;
  root.querySelector('#admin-current-page')!.textContent=t(sections[name]);
  root.querySelectorAll<HTMLElement>('[data-section]').forEach(button=>{const active=button.dataset.section===name;button.classList.toggle('is-active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
- const content=root.querySelector<HTMLElement>('#admin-content')!;const status=root.querySelector('#admin-status')!;status.textContent='';
+ const previous=root.querySelector<HTMLElement>('#admin-content')!;const content=document.createElement('div');content.id='admin-content';content.innerHTML=`<div class="admin-loading" role="status">${language==='vi'?'Đang tải…':'Loading…'}</div>`;previous.replaceWith(content);const status=root.querySelector('#admin-status')!;status.textContent='';
  const views:Record<string,typeof overview>={dashboard:overview,contacts:enquiries,settings:website,warehouse:gke};
  try{await views[name]({content,status,language,relocalizing,request,t,esc,icon,open:section});}
  catch(error){status.textContent=errorText(error);}

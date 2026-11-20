@@ -24,7 +24,7 @@ const LOOK = {
 
 // Sun: high, from the south-west → soft shadows fall north-east (screen right / slightly up).
 const SUN_OFFSET = new THREE.Vector3(-150, 400, 230)
-const SHADOW_MAP = 4096
+const SHADOW_MAP = 2048
 const SHADOW_EXTENT = 130 // ± metres around the controls target at site zoom
 const SHADOW_EXTENT_RANGE = [60, 420]
 
@@ -71,7 +71,7 @@ export function createScene(container, opts = {}) {
 
   function frame() {
     const now = performance.now()
-    if(opts.maxFps && now-last<1000/opts.maxFps)return
+    if(opts.maxFps && now-last<1000/opts.maxFps-0.75)return
     const dt = Math.min(MAX_DT, Math.max(0, (now - last) / 1000))
     last = now
     elapsed += dt
@@ -132,9 +132,8 @@ export function createScene(container, opts = {}) {
 
 // ── construction helpers ─────────────────────────────────────────────────────────────────────
 
-function createRenderer({ preserveDrawingBuffer = true }) {
-  // preserveDrawingBuffer keeps the last frame readable for screenshots / thumbnails; the cost
-  // is negligible for a single full-screen canvas.
+function createRenderer({ preserveDrawingBuffer = false }) {
+  // Keep the default framebuffer disposable; screenshots can opt in explicitly.
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace

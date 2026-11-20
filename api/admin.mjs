@@ -94,7 +94,7 @@ export default async function handler(req,res) {
         const scope=new URLSearchParams(params);scope.delete('status');
         const scoped=filterContacts(all,scope);
         const counts=Object.fromEntries(['received','contacted','qualified','closed','spam'].map(status=>[status,scoped.filter(row=>row.status===status).length]));
-        return json(res,200,{rows:rows.slice((page-1)*25,page*25),total:rows.length,page,pages:Math.max(1,Math.ceil(rows.length/25)),counts,scopeTotal:scoped.length,services:[...new Set(all.map(row=>row.payload.service).filter(Boolean))]});
+        return json(res,200,{rows:rows.slice((page-1)*25,page*25),total:rows.length,page,pages:Math.max(1,Math.ceil(rows.length/25)),counts,scopeTotal:scoped.length,...(scoped.length<=25?{scopeRows:scoped}:{}),services:[...new Set(all.map(row=>row.payload.service).filter(Boolean))]});
       }
       const format=params.get('format')==='json'?'json':'csv';
       res.writeHead(200,{'Content-Type':format==='csv'?'text/csv; charset=utf-8':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="gke-contacts-${new Date().toISOString().slice(0,10)}.${format}"`,'Cache-Control':'no-store'});

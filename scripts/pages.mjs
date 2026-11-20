@@ -58,15 +58,15 @@ function landing(l){let main=source.slice(source.indexOf('<main>'),source.indexO
  main=main.replace(/(<h3 class="about-subtitle about-subtitle--service">[\s\S]*?<p class="about-highlight")/,'$1 data-site-content="philosophy"');
  for(const [value,key] of [['1-6H','processing'],['100,000+','monthlyOrders'],['24/7','support'],['300+','clients'],['API','integration']])main=main.replace(`<h4>${value}</h4>`,`<h4 data-site-stat="${key}">${value}</h4>`);
  main=main.replace('Measurable operational pansactions.','Measurable operational performance.').replace('Tailored solutions for each busiansactions.','Tailored solutions for each business.');
- main=translate(main,l).replace('Cost Estimation','Request a quote').replace('Ước tính chi phí','Yêu cầu báo giá').replace('运费估算','申请报价');
+ main=translate(main,l).replace('Cost Estimation','Request a quote').replace('Ước tính chi phí','Yêu cầu báo giá').replace('Ước tính cước phí','Yêu cầu báo giá').replace('运费估算','申请报价');
  main=main.replace(/<div class="form-group-banner">\s*<label>[^<]+<\/label>\s*<input type="tel" id="phone"[^>]+>\s*<\/div>/,`<div class="form-group-banner"><label for="estimate-phone">${tr(l,'Phone number','Số điện thoại','联系电话')}</label><input type="tel" id="estimate-phone" autocomplete="tel" maxlength="30" placeholder="${tr(l,'Enter your phone number','Nhập số điện thoại','请输入联系电话')}"></div>`)
  .replace(/<button type="button" class="btn-calc" onclick="handleCalc\(\)">[\s\S]*?<\/button>/,`<button type="button" class="btn-calc" id="landing-estimate">${labels[l].quote}</button>`)
- .replace('<div class="price" aria-live="polite">$0.00</div>','<div class="price" aria-hidden="true">—</div>')
+ .replace('<div class="price" aria-live="polite">$0.00</div>','')
  .replace(/<label>([^<]+)<\/label>\s*(<input type="number" id="(weight|length|width|height)")/g,(_,label,input,key)=>`<label for="${key}">${label} (${key==='weight'?'kg':'cm'})</label>${input}`)
  .replace(/type="number" id="(weight|length|width|height)"[^>]+/g,(_,key)=>`type="text" id="${key}" inputmode="decimal" autocomplete="off" placeholder="${key==='weight'?'0 kg':'0 cm'}"`)
  .replace(/href="https:\/\/gkelogistics.com\/contact"/g,`href="${paths[l].contact}"`)
- .replace('</main>',`${warehousePromo(l)}${contactForm(l)}</main>`);
- main=main.replaceAll('https://gkelogistics.com/videos/upload/gke_intro.mp4','/original/videos/gke-intro.mp4');
+ .replace('</main>',`${warehousePromo(l)}</main>`);
+ main=main.replaceAll('https://gkelogistics.com/videos/upload/gke_intro.mp4','/original/videos/gke-intro.mp4').replace('<video autoplay loop muted playsinline controls>','<video preload="none" loop muted playsinline controls>');
  main=main.replace('<div class="estimate-footer">',`<div id="landing-estimate-result" role="status"></div><div class="estimate-footer">`);
  return main;
 }
@@ -74,11 +74,13 @@ function warehouse(l){const t=(a,b,c)=>tr(l,a,b,c);return `<div id="app"><div id
 function document(l,page,env){
  const title=`${labels[l][page]} | GKE Logistics`;
  let head=source.slice(source.indexOf('<head>')+6,source.indexOf('</head>')).replace(/<title>[\s\S]*?<\/title>/,`<title>${title}</title>`).replaceAll('https://gkelogistics.com/images/default-share.jpg','/brand/logo-preview.png');
+ head=head.replace(/<link[^>]+rel="(?:icon|shortcut icon|apple-touch-icon|manifest)"[^>]*>/g,'');
+ head+='<link rel="icon" type="image/png" href="/brand/icon.png?v=2"><link rel="apple-touch-icon" href="/brand/icon.png?v=2">';
  head+=`<meta name="description" content="${esc(defaultSettings.content[l].heroDescription)}"><meta name="robots" content="${env.GKE_INDEXING==='1'?'index, follow':'noindex, nofollow'}">`;
  for(const lang of Object.keys(paths))head+=`<link vite-ignore rel="alternate" hreflang="${lang}" href="${env.SITE_URL||''}${paths[lang][page]}">`;
  if(env.SITE_URL)head+=`<link rel="canonical" href="${esc(new URL(paths[l][page],env.SITE_URL).href)}">`;
- if(page==='warehouse')return `<!doctype html><html lang="${l}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><meta name="robots" content="noindex"><link rel="icon" href="/brand/icon.png"></head><body data-locale="${l}" class="gke-warehouse-body">${warehouse(l)}</body></html>`;
+ if(page==='warehouse')return `<!doctype html><html lang="${l}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><meta name="robots" content="noindex"><link rel="icon" href="/brand/icon.png?v=2"></head><body data-locale="${l}" class="gke-warehouse-body">${warehouse(l)}</body></html>`;
  return `<!doctype html><html lang="${l}"><head>${head}<link rel="stylesheet" href="/site.css"></head><body data-locale="${l}" data-quote-path="${paths[l].quote}">${header(l,page)}${page==='home'?landing(l):feature(l,page)}${footer(l)}<button id="scrollTopBtn" aria-label="${tr(l,'Scroll to top','Về đầu trang','返回顶部')}">↑</button><script type="module" src="/src/site.ts"></script></body></html>`;
 }
-function adminDocument(){return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>GKE Administration</title><link rel="icon" href="/brand/icon.png"></head><body><div id="admin-app"></div><script type="module" src="/src/admin.ts"></script></body></html>`;}
+function adminDocument(){return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>GKE Administration</title><link rel="icon" href="/brand/icon.png?v=2"></head><body><div id="admin-app"></div><script type="module" src="/src/admin.ts"></script></body></html>`;}
 export function generatePages(env=process.env){const input={};for(const [l,pages]of Object.entries(paths))for(const [page,route]of Object.entries(pages)){const file=resolve(route==='/'?'index.html':route.slice(1)+'.html');mkdirSync(dirname(file),{recursive:true});writeFileSync(file,document(l,page,env));input[`${l}-${page}`]=file;}writeFileSync('admin.html',adminDocument());input.admin=resolve('admin.html');return input;}

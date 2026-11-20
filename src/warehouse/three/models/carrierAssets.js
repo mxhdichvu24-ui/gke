@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {carrierForRoute,carriers} from '../../data/carriers.mjs';
 import {selectedRoute} from '../../data/selectedRoute.js';
 const loader=new GLTFLoader();
-const baseBrands=['usps','uniuni','evri','fedex'];
+const baseBrands=selectedRoute==='UK'?['evri','fedex']:['usps','uniuni','fedex'];
 function crispLabels(model){
  model.traverse(node=>{
   if(!node.isMesh||!node.material?.map)return;
@@ -35,7 +35,7 @@ function logoTexture(image,brand,label=false){
  }
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=16;return texture;
 }
-for(const brand of ['speedx','royalmail']){
+for(const brand of [selectedRoute==='UK'?'royalmail':'speedx']){
  const image=new Image();image.src='/gke3d/logos/'+brand+(brand==='speedx'?'.webp':'.svg');await image.decode().catch(()=>{});
  const logo=logoTexture(image,brand),label=logoTexture(image,brand,true);
  const van=carrierModels.fedex.van?.clone(true),parcel=carrierModels.fedex.parcel?.clone(true);

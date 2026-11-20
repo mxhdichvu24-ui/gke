@@ -2,10 +2,6 @@ import {routeCarriers,carriers} from './data/carriers.mjs';
 import {selectedRoute} from './data/selectedRoute.js';
 import './ui/styles.css';
 import './gke.css';
-import {createScene} from './three/scene.js';
-import {createWorld} from './three/world.js';
-import {createInteraction} from './three/interaction.js';
-import {createCameraDirector} from './three/cameraDirector.js';
 import {mountUI} from './ui/index.js';
 import {store,bus} from './state/store.js';
 import {defaultWarehouseSettings} from '../warehouse-settings.mjs';
@@ -59,13 +55,30 @@ function applyPublished(value){
  lastVersion=JSON.stringify(published);bus.emit('data:update',{});
 }
 async function refreshPublished(){
+ if(document.hidden)return;
  try{const response=await fetch('/api/site-settings',{signal:AbortSignal.timeout(7000),cache:'no-store'});if(!response.ok)throw new Error();const value=await response.json();const wasUnavailable=dataUnavailable;dataUnavailable=false;if(wasUnavailable||JSON.stringify(value.warehouse)!==lastVersion)applyPublished(value);}
  catch{dataUnavailable=true;const note=toolbar.querySelector('span');note.textContent=({en:'Unable to refresh figures',vi:'Chưa kết nối được dữ liệu mới',zh:'暂时无法刷新数据'}[locale]);}
 }
 db.reportedOnly=true;db.notifications.splice(0);Object.assign(db.user,{name:'GKE Logistics',role:'GKE 3D'});
-document.body.classList.add('gke-reported-data');applyPublished({warehouse:published});await refreshPublished();
+document.body.classList.add('gke-reported-data');applyPublished({warehouse:published});
+void refreshPublished();
 const dataTimer=setInterval(refreshPublished,15000);
+ const params=new URLSearchParams(location.search),site=params.get('site');
+ if(site&&(site==='ALL'||db.site(site)))store.setSite(site);
+mountUI(document.getElementById('ui'));
+ document.getElementById('wt-topbar').append(toolbar);
+ const loading=document.createElement('div');loading.className='gke-scene-loading';loading.setAttribute('role','status');
+ loading.textContent=({en:'Loading GKE 3D…',vi:'Đang tải GKE 3D…',zh:'正在加载 GKE 3D…'}[locale]);
+ document.getElementById('viewport').append(loading);
+ const search=document.querySelector('.tb-search input');if(search){search.placeholder=({en:'Search GKE locations…',vi:'Tìm địa điểm GKE…',zh:'搜索 GKE 网点…'}[locale]);search.setAttribute('aria-label',search.placeholder);}
+ const avatar=document.querySelector('.tb-user__avatar');if(avatar)avatar.innerHTML='<img src="/brand/icon.png" alt="GKE" style="width:32px;height:32px;object-fit:contain">';
+ localizeWarehouse(document.getElementById('ui'));
+ document.getElementById('simulation-toggle').hidden=true;
 try {
+ await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ const [{createScene},{createWorld},{createInteraction},{createCameraDirector}]=await Promise.all([
+  import('./three/scene.js'),import('./three/world.js'),import('./three/interaction.js'),import('./three/cameraDirector.js')
+ ]);
  const app=createScene(document.getElementById('viewport'),{maxFps:layoutOnly?12:30});
  app.renderer.setPixelRatio(layoutOnly?1:Math.min(devicePixelRatio||1,1.5));
  if(layoutOnly)app.renderer.shadowMap.enabled=false;
@@ -73,17 +86,10 @@ try {
  world.pickables.splice(0,world.pickables.length,...world.pickables.filter(object=>object.userData.ref?.type==='site'));
  const director=createCameraDirector(app,world);
  const interaction=createInteraction(app,world);
- mountUI(document.getElementById('ui'));
- document.getElementById('wt-topbar').append(toolbar);
- const search=document.querySelector('.tb-search input');if(search){search.placeholder=({en:'Search GKE locations…',vi:'Tìm địa điểm GKE…',zh:'搜索 GKE 网点…'}[locale]);search.setAttribute('aria-label',search.placeholder);}
- const avatar=document.querySelector('.tb-user__avatar');if(avatar)avatar.innerHTML='<img src="/brand/icon.png" alt="GKE" style="width:32px;height:32px;object-fit:contain">';
- localizeWarehouse(document.getElementById('ui'));
- document.getElementById('simulation-toggle').hidden=true;
- app.onFrame((dt,elapsed)=>{world.update(dt,elapsed);interaction.update(dt,elapsed);director.update(dt,elapsed);});
+ app.onFrame((dt,elapsed)=>{interaction.update(dt,elapsed);director.update(dt,elapsed);});
  const visibility=()=>document.hidden?app.stop():app.start();document.addEventListener('visibilitychange',visibility);
  app.start();
- const params=new URLSearchParams(location.search),site=params.get('site');
- if(site&&(site==='ALL'||db.site(site)))store.setSite(site);
+ loading.remove();
  app.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();app.stop();document.getElementById('warehouse-fallback').hidden=false;});
  window.addEventListener('pagehide',()=>{clearInterval(dataTimer);app.stop();app.renderer.dispose();document.removeEventListener('visibilitychange',visibility);});
 } catch {

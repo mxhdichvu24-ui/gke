@@ -31,7 +31,7 @@ function badgeClass(siteId) {
 
 function networkSub() {
   const s = siteStats('ALL')
-  return `${db.sites().length} sites · ${s.docked} docked`
+  return `${db.sites().length} sites · ${s.docked??'—'} docked`
 }
 
 const TYPE_ICON = {
@@ -333,9 +333,10 @@ function createSiteSelector(root) {
   function refreshMenu() {
     for (const [id, r] of rows) {
       if (id === 'ALL') continue
-      const pct = Math.round(siteStats(id).fullPct)
-      setText(r.pct, `${pct}%`)
-      const w = `${Math.min(100, pct)}%`
+      const value=siteStats(id).fullPct
+      const pct=value==null?null:Math.round(value)
+      setText(r.pct, pct==null?'—':`${pct}%`)
+      const w = `${Math.min(100, pct??0)}%`
       if (r.fill.style.width !== w) r.fill.style.width = w
       setText(r.sub, siteMenuSub(id))
     }

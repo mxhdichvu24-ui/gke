@@ -12,9 +12,12 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  process.env.GKE_LOCAL_DEV='1';process.env.GKE_LOCAL_DATA=join(directory,'data.json');
  try{
  assert.equal((await call(admin,'contacts')).status,401);
+ assert.equal((await call(admin,'changes')).status,401);
  const password=randomBytes(24).toString('base64url');
  const setup=await call(admin,'setup','POST',{email:'qa@example.test',password});assert.equal(setup.status,201);
  const cookie=setup.headers['Set-Cookie'].split(';')[0];
+ const version=async()=>(await call(admin,'changes','GET',undefined,cookie)).body().version;
+ assert.equal(await version(),'0');
  const modified=structuredClone(defaultSettings);modified.phone='0900 000 001';
  assert.equal((await call(admin,'settings','PUT',{value:modified,revision:0},cookie)).status,200);
  assert.equal((await call(admin,'settings','PUT',{value:modified,revision:0},cookie)).status,409);
@@ -32,14 +35,24 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  assert.equal((await call(admin,'warehouse','PUT',{value:invalid,revision:2},cookie)).status,400);
  const data={name:'=CSV safety test',phone:'0900000001',email:'qa@example.test',route:'US',message:'Synthetic QA enquiry',consent:true,key:randomUUID()};
  const received=await call(quote,'','POST',data);assert.equal(received.status,201);
+ assert.equal(await version(),'1');
  const again=await call(quote,'','POST',data);assert.equal(again.body().reference,received.body().reference);
+ assert.equal(await version(),'1');
  const contacts=await call(admin,'contacts','GET',undefined,cookie);assert.equal(contacts.body().total,1);
  assert.equal(contacts.body().scopeRows.length,1);
  assert.equal((await call(admin,'contacts','PATCH',{reference:received.body().reference,status:'contacted',notes:'Local test update'},cookie)).status,200);
+ assert.equal(await version(),'2');
  const filtered=(await call(admin,'contacts&status=received','GET',undefined,cookie)).body();
  assert.equal(filtered.total,0);assert.equal(filtered.scopeTotal,1);assert.equal(filtered.counts.contacted,1);
  assert.equal(filtered.scopeRows[0].status,'contacted');
  const output=await call(admin,'export','GET',undefined,cookie);assert.equal(output.status,200);assert.ok(output.text.includes("'=CSV safety test"));
+ const parcel={...data,key:randomUUID(),phone:'+1 (202) 555-0123',service:'seller-us',packages:[{weight:'2,125',length:'30.25',width:'20',height:'10',count:2}]};
+ assert.equal((await call(quote,'','POST',parcel)).status,201);
+ const row=(await call(admin,'contacts','GET',undefined,cookie)).body().rows.find(row=>row.payload.phone==='+12025550123');
+ assert.equal(row.payload.packages[0].parcel.weightG,2125);assert.deepEqual(row.payload.packages[0].parcel.dimensions,[3025,2000,1000]);assert.equal(row.payload.packages[0].count,2);
+ const invalidPhone=await call(quote,'','POST',{...parcel,key:randomUUID(),phone:'+84'});assert.equal(invalidPhone.status,400);assert.equal(invalidPhone.body().field,'phone');
+ const invalidParcel=await call(quote,'','POST',{...parcel,key:randomUUID(),packages:[{...parcel.packages[0],height:'0'}]});assert.equal(invalidParcel.status,400);assert.equal(invalidParcel.body().field,'packages');
+ assert.equal(await version(),'3');
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password:'incorrect'})).status,401);
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password})).status,200);
  }finally{await rm(directory,{recursive:true,force:true});delete process.env.GKE_LOCAL_DATA;delete process.env.GKE_LOCAL_DEV;}

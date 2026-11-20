@@ -38,7 +38,7 @@ export async function supabase(path, {method = 'GET', body, prefer} = {}) {
   const response = await fetch(new URL(`/rest/v1/${path}`, process.env.SUPABASE_URL), {
     method, headers, ...(body === undefined ? {} : {body: JSON.stringify(body)}), signal: AbortSignal.timeout(12000)
   });
-  if (!response.ok) throw new Error(`Storage request failed (${response.status})`);
+  if (!response.ok) throw Object.assign(new Error('Storage request failed'),{status:response.status});
   if (response.status === 204) return null;
   const content = await response.text();
   return content ? JSON.parse(content) : null;
@@ -82,6 +82,7 @@ export async function acceptContact({key, digest, payload, fingerprint}) {
     data.limits[limitKey] = (data.limits[limitKey] || 0) + 1;
     const row = {request_key:key, reference: randomUUID(), payload_hash:digest, payload, status:'received', notes:'', created_at:new Date().toISOString()};
     data.contacts.unshift(row);
+    data.contactVersion=(data.contactVersion||0)+1;
     return {reference:row.reference};
   });
 }
@@ -101,6 +102,7 @@ export async function updateContact(reference, patch) {
     const row = data.contacts.find(item => item.reference === reference);
     if (!row) return null;
     Object.assign(row, patch);
+    data.contactVersion=(data.contactVersion||0)+1;
     return row;
   });
   const rows = await supabase(`gke_quote_requests?reference=eq.${encodeURIComponent(reference)}`, {method:'PATCH', body:patch, prefer:'return=representation'});
@@ -115,3 +117,10 @@ export async function localAdmin() {
 
 // Server-side access for additional administrator workspace data.
 export async function localReadState(){await queue;return localRead();}
+
+export async function contactVersion(){
+  if(localMode()){await queue;return String((await localRead()).contactVersion||0);}
+  const rows=await supabase('gke_contact_revision?id=eq.main&select=version');
+  if(!rows?.length)throw new Error('Missing contact revision');
+  return String(rows[0].version);
+}

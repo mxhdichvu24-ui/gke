@@ -24,13 +24,13 @@ const LOOK = {
 
 // Sun: high, from the south-west → soft shadows fall north-east (screen right / slightly up).
 const SUN_OFFSET = new THREE.Vector3(-150, 400, 230)
-const SHADOW_MAP = 2048
+const SHADOW_MAP = 1024
 const SHADOW_EXTENT = 130 // ± metres around the controls target at site zoom
 const SHADOW_EXTENT_RANGE = [60, 420]
 
 // Fog starts beyond a site view; it is pushed back when the camera pulls out (network overview).
-const FOG_NEAR = 420
-const FOG_FAR = 1100
+const FOG_NEAR = 220
+const FOG_FAR = 650
 
 const ARC_MAX_LIFT = 0.8 // distance multiplier peaks at 1 + 0.8 = 1.8 mid-flight
 
@@ -68,6 +68,10 @@ export function createScene(container, opts = {}) {
   let last = 0
   let elapsed = 0
   let watchdog = 0
+  let sampleAt=0,sampleFrames=0,sampleCost=0
+  let slowSamples=0
+  let shadowAt=0
+  renderer.shadowMap.autoUpdate=false
 
   function frame() {
     const now = performance.now()
@@ -84,14 +88,29 @@ export function createScene(container, opts = {}) {
     updateFog(scene.fog, distance)
     updateClipping(camera, distance)
 
+    // Shadow movement needs fewer updates than the vehicles themselves.
+    if(now-shadowAt>=100){renderer.shadowMap.needsUpdate=true;shadowAt=now}
     renderer.render(scene, camera)
     labelRenderer.render(scene, camera)
+    sampleFrames++;sampleCost+=performance.now()-now
+    if(now-sampleAt>=1000){
+      const fps=sampleFrames*1000/(now-sampleAt),cost=sampleCost/sampleFrames
+      renderer.domElement.dataset.fps=fps.toFixed(1)
+      renderer.domElement.dataset.frameMs=cost.toFixed(1)
+      renderer.domElement.dataset.drawCalls=String(renderer.info.render.calls)
+      slowSamples=fps<22&&cost>24?slowSamples+1:0
+      // Keep motion and sharp textures on slower GPUs; trade expensive shadows first.
+      if(slowSamples>=3&&renderer.shadowMap.enabled){renderer.shadowMap.enabled=false;sun.castShadow=false;renderer.domElement.dataset.quality='reduced-shadows'}
+      if(slowSamples>=6&&renderer.getPixelRatio()>1){renderer.setPixelRatio(1);renderer.domElement.dataset.quality='balanced'}
+      sampleAt=now;sampleFrames=0;sampleCost=0
+    }
   }
 
   function start() {
     if (running) return
     running = true
     last = performance.now()
+    sampleAt=last;sampleFrames=0;sampleCost=0
     renderer.setAnimationLoop(frame)
     // Hidden / background tabs pause requestAnimationFrame. Keep the world ticking slowly so the
     // live simulation, screenshots and headless previews stay current.
@@ -263,7 +282,7 @@ function updateClipping(camera, distance) {
   const near = THREE.MathUtils.clamp(distance * 0.02, 0.5, 30)
   if (Math.abs(near - camera.near) / camera.near < 0.05) return
   camera.near = near
-  camera.far = Math.max(2500, distance * 5)
+  camera.far = Math.max(500, distance * 3.2)
   camera.updateProjectionMatrix()
 }
 

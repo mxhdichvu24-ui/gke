@@ -76,7 +76,7 @@ export const link = (type, id, text = id) =>
 
 const pct = (v, max) => (max > 0 ? Math.max(0, Math.min(100, (v / max) * 100)) : 0)
 const bar = (value, tone) =>
-  `<div class="bar"><div class="bar__fill bar__fill--${tone}" style="width:${value.toFixed(1)}%"></div></div>`
+  `<div class="bar"><div class="bar__fill bar__fill--${tone}" style="width:${(Number.isFinite(value)?Math.max(0,Math.min(100,value)):0).toFixed(1)}%"></div></div>`
 
 const CARRIER_BLUE = '#2f5bea'
 
@@ -188,12 +188,12 @@ function networkCard() {
   const sites = db.sites()
   const list = sites.map((site) => {
     const st = siteStats(site.id)
-    const full = st.fullPct==null?'—':Math.round(st.fullPct)
+    const full = st.fullPct==null?'—':Math.round(st.fullPct)+'%'
     return `<div class="dp-site" data-site="${esc(site.id)}" role="button" tabindex="0">
       <span class="site-badge dp-site__badge${site.badgeTone === 'cyan' ? ' site-badge--cyan' : ''}">${esc(site.id)}</span>
       <span class="dp-site__name">${esc(site.name)}<small>${fmtNum(st.docked)}/${fmtNum(st.docksTotal)} docked · ${fmtNum(st.inbound)} inbound</small></span>
       ${bar(st.fullPct, 'blue')}
-      <span class="dp-site__pct">${full}%</span>
+      <span class="dp-site__pct">${full}</span>
     </div>`
   }).join('')
   return header({

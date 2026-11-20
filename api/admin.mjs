@@ -4,7 +4,7 @@ import {validateWarehouseSettings} from '../src/warehouse-settings.mjs';
 import { randomBytes } from 'node:crypto';
 import { json,parseBody } from '../server/http.mjs';
 import { defaultSettings,validateSettings } from '../src/site-defaults.mjs';
-import { storageReady,localMode,localTransaction,readSettings,saveSettings,listContacts,updateContact } from '../server/storage.mjs';
+import { storageReady,localMode,localTransaction,readSettings,saveSettings,listContacts,updateContact,contactVersion } from '../server/storage.mjs';
 import { credentials,session,sameOrigin,hashPassword,checkPassword,setSession,clearSession,allowLogin,setupAllowed } from '../server/auth.mjs';
 
 export function filterContacts(rows,params) {
@@ -55,6 +55,7 @@ export default async function handler(req,res) {
     if(action==='logout' && req.method==='POST'){clearSession(res);return json(res,200,{ok:true});}
     const user=await session(req);if(!user)return json(res,401,{code:'unauthorized'});
     if(!storageReady())return json(res,503,{code:'storage_unavailable'});
+    if(action==='changes'&&req.method==='GET')return json(res,200,{version:await contactVersion()});
     if(action==='notes') {
       if(req.method==='GET'){
         const range=noteRange(params.get('from'),params.get('to'));if(!range)return json(res,400,{code:'invalid_input'});
@@ -111,7 +112,13 @@ export default async function handler(req,res) {
         const counts=Object.fromEntries(['received','contacted','qualified','closed','spam'].map(status=>[status,scoped.filter(row=>row.status===status).length]));
         return json(res,200,{rows:rows.slice((page-1)*25,page*25),total:rows.length,page,pages:Math.max(1,Math.ceil(rows.length/25)),counts,scopeTotal:scoped.length,...(scoped.length<=25?{scopeRows:scoped}:{}),services:[...new Set(all.map(row=>row.payload.service).filter(Boolean))]});
       }
-      const format=params.get('format')==='json'?'json':'csv';
+      const format=params.get('format')||'csv';
+      if(!['csv','json','xlsx','print'].includes(format))return json(res,400,{code:'invalid_format'});
+      if(format==='xlsx'||format==='print'){
+        const {contactsXlsx,contactsPrint}=await import('../server/contact-exports.mjs');
+        res.writeHead(200,{'Content-Type':format==='xlsx'?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'text/html; charset=utf-8','Content-Disposition':`${format==='print'?'inline':'attachment'}; filename="gke-contacts-${new Date().toISOString().slice(0,10)}.${format==='print'?'html':'xlsx'}"`,'Cache-Control':'no-store','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'self'"});
+        return res.end(format==='xlsx'?contactsXlsx(rows,params.get('lang')==='vi'):contactsPrint(rows,params));
+      }
       res.writeHead(200,{'Content-Type':format==='csv'?'text/csv; charset=utf-8':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="gke-contacts-${new Date().toISOString().slice(0,10)}.${format}"`,'Cache-Control':'no-store'});
       return res.end(format==='csv'?contactsCsv(rows):JSON.stringify(rows,null,2));
     }

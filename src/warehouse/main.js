@@ -41,6 +41,7 @@ if(layoutOnly)document.body.classList.add('gke-layout-only');
 let published=structuredClone(defaultWarehouseSettings);
 let lastVersion='';
 let dataUnavailable=false;
+let refreshing=false;
 function applyPublished(value){
  const supplied=value?.warehouse;
  published=supplied?.updatedAt?{...supplied,sites:defaultWarehouseSettings.sites.map(fallback=>supplied.sites.find(site=>site.id===fallback.id)||structuredClone(fallback))}:structuredClone(defaultWarehouseSettings);
@@ -55,14 +56,20 @@ function applyPublished(value){
  lastVersion=JSON.stringify(published);bus.emit('data:update',{});
 }
 async function refreshPublished(){
- if(document.hidden)return;
+ if(document.hidden||refreshing)return;
+ refreshing=true;
  try{const response=await fetch('/api/site-settings',{signal:AbortSignal.timeout(7000),cache:'no-store'});if(!response.ok)throw new Error();const value=await response.json();const wasUnavailable=dataUnavailable;dataUnavailable=false;if(wasUnavailable||JSON.stringify(value.warehouse)!==lastVersion)applyPublished(value);}
  catch{dataUnavailable=true;const note=toolbar.querySelector('span');note.textContent=({en:'Unable to refresh figures',vi:'Chưa kết nối được dữ liệu mới',zh:'暂时无法刷新数据'}[locale]);}
+ finally{refreshing=false;}
 }
 db.reportedOnly=true;db.notifications.splice(0);Object.assign(db.user,{name:'GKE Logistics',role:'GKE 3D'});
 document.body.classList.add('gke-reported-data');applyPublished({warehouse:published});
 void refreshPublished();
-const dataTimer=setInterval(refreshPublished,15000);
+const dataTimer=setInterval(refreshPublished,3000);
+const refreshOnFocus=()=>void refreshPublished();
+const refreshOnStorage=event=>{if(event.key==='gke:warehouse-change')void refreshPublished();};
+document.addEventListener('visibilitychange',refreshOnFocus);window.addEventListener('online',refreshOnFocus);window.addEventListener('storage',refreshOnStorage);
+window.addEventListener('pagehide',()=>{clearInterval(dataTimer);document.removeEventListener('visibilitychange',refreshOnFocus);window.removeEventListener('online',refreshOnFocus);window.removeEventListener('storage',refreshOnStorage);},{once:true});
  const params=new URLSearchParams(location.search),site=params.get('site');
  if(site&&(site==='ALL'||db.site(site)))store.setSite(site);
 mountUI(document.getElementById('ui'));
@@ -87,7 +94,7 @@ try {
   import('./three/scene.js'),import('./three/world.js'),import('./three/interaction.js'),import('./three/cameraDirector.js'),import('./state/simulation.js')
  ]);
  const app=createScene(document.getElementById('viewport'),{maxFps:layoutOnly?12:30});
- app.renderer.setPixelRatio(layoutOnly?1:Math.min(devicePixelRatio||1,1.5));
+ app.renderer.setPixelRatio(layoutOnly?1:Math.min(devicePixelRatio||1,window.innerWidth<=650?1.25:1.5));
  if(layoutOnly)app.renderer.shadowMap.enabled=false;
  const world=createWorld(app);
  world.pickables.splice(0,world.pickables.length,...world.pickables.filter(object=>object.userData.ref?.type==='site'));

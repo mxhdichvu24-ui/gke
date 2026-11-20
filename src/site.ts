@@ -1,5 +1,7 @@
 import {enhanceDestinations} from './destination-picker';
 import {defaultSettings} from './site-defaults.mjs';
+import {sendEnquiry,showEnquiryError,clearEnquiryErrors} from './contact-feedback';
+import {normalizePhone} from './contact-validation.mjs';
 const locale = document.documentElement.lang;
 const vi = locale === 'vi', zh = locale === 'zh';
 const t = (en:string,vn:string,cn:string) => zh ? cn : vi ? vn : en;
@@ -22,17 +24,18 @@ contact?.addEventListener('submit',async event=>{
   event.preventDefault();
   const button=contact.querySelector<HTMLButtonElement>('button[type=submit]')!;
   if(button.disabled)return;
+  clearEnquiryErrors(contact);
   const data=Object.fromEntries(new FormData(contact));
+  if(!normalizePhone(data.phone)){showEnquiryError(contact,status!,{field:'phone'});return;}
   const payload={...data,consent:data.consent==='on',locale};
   const serial=JSON.stringify(payload);
   if(serial!==previous)payloadKey=crypto.randomUUID();previous=serial;
   button.disabled=true;status!.textContent=t('Sending…','Đang gửi…','提交中…');
   try{
-    const r=await fetch('/api/quote-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,key:payloadKey}),signal:AbortSignal.timeout(12000)});
-    const result=await r.json();if(!r.ok)throw new Error();
+    const result=await sendEnquiry({...payload,key:payloadKey});
     status!.textContent=t('Enquiry received. Reference ','Đã nhận yêu cầu. Mã ','咨询已收到。参考编号 ')+result.reference;
     contact.reset();previous='';
-  }catch {status!.textContent=t('Could not confirm receipt. Please retry or call GKE.','Chưa xác nhận tiếp nhận. Hãy thử lại hoặc gọi GKE.','暂时无法确认接收。请重试或致电 GKE。');}
+  }catch(error){showEnquiryError(contact,status!,error);}
   finally{button.disabled=false;}
 });
 function applySettings(settings:typeof defaultSettings){
@@ -79,3 +82,6 @@ if(window.parent!==window && new URLSearchParams(location.search).get('admin-pre
   if(target)document.querySelector(target)?.scrollIntoView({block:'center'});
  });
 }
+import '../public/original/css/frontend/global_frontend.css';
+import '../public/original/swiper-bundle.min.css';
+import '../public/site.css';

@@ -1,3 +1,4 @@
+import {dongAnhMapUrl} from '../../gke-locations.mjs';
 // Right-hand detail panel (SPEC §2.4). Shows the selected entity, or the current site card
 // (or the network overview when siteId === 'ALL'). A selection change cross-fades to a new layer
 // while the card height eases; live data updates patch the current layer in place.
@@ -173,6 +174,7 @@ function siteCard(site) {
     sub: site.address,
     buttons,
   })
+    + (site.id==='WH-02'?`<a class="gke-map-link" href="${dongAnhMapUrl}" target="_blank" rel="noopener noreferrer">${document.documentElement.lang==='vi'?'Xem vị trí kho trên Google Maps':document.documentElement.lang==='zh'?'在 Google 地图中查看':'View location on Google Maps'} ↗</a>`:'')
     + status(site.status??'—', statusMeta('site', site.status).tone, siteActivityLine(site.id))
     + siteTiles(s)
     + section('Inventory', 'units')

@@ -112,3 +112,6 @@ export async function localAdmin() {
   await queue;
   return (await localRead()).admin;
 }
+
+// Server-side access for additional administrator workspace data.
+export async function localReadState(){await queue;return localRead();}

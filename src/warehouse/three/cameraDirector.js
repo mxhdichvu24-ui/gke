@@ -45,7 +45,14 @@ export function createCameraDirector(app, world) {
   // ── views ────────────────────────────────────────────────────────────────────────────────────
 
   function siteView(siteId) {
-    return normalizeView(siteId === 'ALL' ? world.getNetworkView?.() : world.getSiteView?.(siteId))
+    const view=normalizeView(siteId === 'ALL' ? world.getNetworkView?.() : world.getSiteView?.(siteId))
+    if(view&&window.innerWidth<=650&&siteId!=='ALL'){
+      view.distance*=Math.max(1.8,Math.min(3.4,1.25/camera.aspect))
+      const centre=world.getEntityBox('site',siteId).getCenter(new THREE.Vector3())
+      const offset=screenOffset(.5,.57,view,new THREE.Vector3())
+      view.target={x:centre.x-offset.x,y:0,z:centre.z+5-offset.z}
+    }
+    return view
   }
 
   function currentView() {
@@ -224,6 +231,10 @@ export function createCameraDirector(app, world) {
     controls.target.add(followDelta)
   }
 
+  let lastWidth=window.innerWidth
+  const onResize=()=>{const width=window.innerWidth;if((width<=650)!==(lastWidth<=650)||width<=650&&Math.abs(width-lastWidth)>60){const view=siteView(store.state.siteId);if(view)app.flyTo({...view,duration:0});}lastWidth=width}
+  window.addEventListener('resize',onResize)
+
   // initial camera: the current site's view, no animation
   const initial = siteView(store.state.siteId)
   if (initial) app.flyTo({ ...initial, duration: 0 })
@@ -237,6 +248,7 @@ export function createCameraDirector(app, world) {
       dom.removeEventListener('pointerdown', onDown)
       dom.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('resize',onResize)
     },
   }
 }

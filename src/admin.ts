@@ -1,3 +1,4 @@
+import {calendar,emailGuide} from './admin-organizer';
 import {overview,enquiries,website,gke,searchContacts,invalidateContacts} from './admin-workspace';
 import {adminText,type AdminLanguage} from './admin-i18n';
 import './admin.css';
@@ -10,8 +11,8 @@ let relocalizing=false;
 const readCache=new Map<string,{value:any,at:number}>();
 const pendingReads=new Map<string,Promise<any>>();
 let cacheGeneration=0;
-const sections:Record<string,string>={dashboard:'Overview',contacts:'Customer enquiries',settings:'Website content',warehouse:'GKE 3D data'};
-const paths:Record<string,string>={dashboard:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',contacts:'M21 11a8 8 0 0 1-8 8H5l-4 3V11a10 10 0 0 1 20 0Z M7 10h8 M7 14h5',settings:'M4 3h16v18H4z M8 7h8 M8 11h8 M8 15h5',warehouse:'m3 8 9-5 9 5v10l-9 5-9-5V8Z m0 0 9 5 9-5 M12 13v10',external:'M14 3h7v7 M21 3l-11 11 M10 3H3v18h18v-7',logout:'M9 3H3v18h6 M13 7l5 5-5 5 M7 12h11',globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3c-5 5-5 13 0 18 5-5 5-13 0-18'};
+const sections:Record<string,string>={dashboard:'Overview',contacts:'Customer enquiries',settings:'Website content',warehouse:'GKE 3D data',calendar:'Calendar & notes',mail:'Email'};
+const paths:Record<string,string>={calendar:'M4 5h16v16H4z M8 3v4 M16 3v4 M4 10h16 M8 14h2 M14 14h2 M8 18h2',mail:'M3 5h18v14H3z M3 5l9 7 9-7',dashboard:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',contacts:'M21 11a8 8 0 0 1-8 8H5l-4 3V11a10 10 0 0 1 20 0Z M7 10h8 M7 14h5',settings:'M4 3h16v18H4z M8 7h8 M8 11h8 M8 15h5',warehouse:'m3 8 9-5 9 5v10l-9 5-9-5V8Z m0 0 9 5 9-5 M12 13v10',external:'M14 3h7v7 M21 3l-11 11 M10 3H3v18h18v-7',logout:'M9 3H3v18h6 M13 7l5 5-5 5 M7 12h11',globe:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3c-5 5-5 13 0 18 5-5 5-13 0-18'};
 const icon=(name:string)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.settings}"/></svg>`;
 const languageControl=()=>`<label class="admin-language">${icon('globe')}<span class="sr-only">${t('Language')}</span><select id="admin-language" aria-label="${t('Language')}"><option value="en" ${language==='en'?'selected':''}>English</option><option value="vi" ${language==='vi'?'selected':''}>Tiếng Việt</option></select></label>`;
 const heading=(title:string,description:string)=>`<div class="admin-page-heading"><div><span class="admin-eyebrow">GKE LOGISTICS</span><h2>${t(title)}</h2><p>${t(description)}</p></div></div>`;
@@ -70,7 +71,7 @@ async function section(name:string){
  root.querySelector('#admin-current-page')!.textContent=t(sections[name]);
  root.querySelectorAll<HTMLElement>('[data-section]').forEach(button=>{const active=button.dataset.section===name;button.classList.toggle('is-active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
  const previous=root.querySelector<HTMLElement>('#admin-content')!;const content=document.createElement('div');content.id='admin-content';content.innerHTML=`<div class="admin-loading" role="status">${language==='vi'?'Đang tải…':'Loading…'}</div>`;previous.replaceWith(content);const status=root.querySelector('#admin-status')!;status.textContent='';
- const views:Record<string,typeof overview>={dashboard:overview,contacts:enquiries,settings:website,warehouse:gke};
+ const views:Record<string,typeof overview>={dashboard:overview,contacts:enquiries,settings:website,warehouse:gke,calendar,mail:emailGuide};
  try{await views[name]({content,status,language,relocalizing,request,t,esc,icon,open:section});}
  catch(error){status.textContent=errorText(error);}
 }

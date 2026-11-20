@@ -1,3 +1,4 @@
+import {dongAnhAddress} from './gke-locations.mjs';
 export const warehouseMetrics = {
  stock:'Stock on hand (pallets)', capacity:'Storage capacity (pallets)', onTime:'On-time delivery (%)',
  outboundToday:'Outbound today (trucks)', putawaysToday:'Put-aways today (pallets)',
@@ -7,7 +8,7 @@ export const warehouseMetrics = {
 };
 export const defaultWarehouseSettings = {
  mode:'manual', updatedAt:null,
- sites:[['WH-01','GKE Hoang Mai','Hoang Van Thu Ward, Hoang Mai District, Hanoi'],['WH-02','GKE Dong Anh','Dong Anh, Hanoi, Vietnam'],['WH-03','GKE Ho Chi Minh','Van Phuc Urban Area, Hiep Binh Ward, Ho Chi Minh City'],['WH-04','GKE Da Nang','Thac Gian Ward, Thanh Khe District, Da Nang']].map(([id,name,address])=>({
+ sites:[['WH-01','GKE Hoang Mai','Hoang Van Thu Ward, Hoang Mai District, Hanoi'],['WH-02','GKE Dong Anh',dongAnhAddress],['WH-03','GKE Ho Chi Minh','Van Phuc Urban Area, Hiep Binh Ward, Ho Chi Minh City'],['WH-04','GKE Da Nang','Thac Gian Ward, Thanh Khe District, Da Nang']].map(([id,name,address])=>({
   id,name,address,status:null,...Object.fromEntries(Object.keys(warehouseMetrics).map(key=>[key,null])),inventory:[],
  })),
 };

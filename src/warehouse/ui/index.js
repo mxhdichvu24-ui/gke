@@ -24,6 +24,7 @@ const REGIONS = [
 
 /** Scale factor so the 1440×830 layout fits the window (never upscales). */
 export function uiScale(width = window.innerWidth, height = window.innerHeight) {
+  if(width<=650)return 1
   const s = Math.min(width / DESIGN_WIDTH, height / DESIGN_HEIGHT, 1)
   return Math.max(MIN_SCALE, Math.round(s * 1000) / 1000)
 }

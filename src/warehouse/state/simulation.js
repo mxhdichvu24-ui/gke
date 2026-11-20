@@ -958,11 +958,11 @@ export function createSimulation(world) {
       }
       syncAll()
       const minute = Math.floor(clock)
-      if (minute !== lastMinute) {
+      if (!db.reportedOnly && minute !== lastMinute) {
         lastMinute = minute
         store.set({ simMinutes: minute })
       }
-      if (emitAcc >= EMIT_EVERY) {
+      if (!db.reportedOnly && emitAcc >= EMIT_EVERY) {
         emitAcc = 0
         siteCounters()
         bus.emit('data:update', { simMinutes: minute })
@@ -1157,7 +1157,7 @@ export function createSimulation(world) {
   function leftSite(ts) {
     const site = ts.site
     if (site.occupant.get(ts.t.dockId) === ts) site.occupant.delete(ts.t.dockId)
-    site.entity.outboundToday = (site.entity.outboundToday ?? 0) + 1
+    if (!db.reportedOnly) site.entity.outboundToday = (site.entity.outboundToday ?? 0) + 1
     const shp = db.shipment(ts.t.shipmentId)
     if (shp && ts.dir === 'out') {
       shp.times.transit = Math.round(clock)
@@ -1384,6 +1384,7 @@ export function createSimulation(world) {
 
   /** Stock moves: +1 a pallet received (put away), −1 a pallet shipped. */
   function siteFlow(site, delta) {
+    if (db.reportedOnly) return
     const s = site.entity
     s.stock = Math.max(0, (s.stock ?? 0) + delta)
     s.stockDelta = (s.stockDelta ?? 0) + delta

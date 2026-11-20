@@ -1,3 +1,4 @@
+import {dongAnhMapUrl,dongAnhAddress} from '../src/gke-locations.mjs';
 import {quoteRequestPage} from './quote-page.mjs';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -36,7 +37,7 @@ function footer(l){
  html=html.replace('Hanoi Warehouse:', 'GKE Hoang Mai:').replace('HCM Warehouse:','GKE Ho Chi Minh:').replace('Da Nang Warehouse:','GKE Da Nang:');
  for(const [value,key]of [['cs2hangkelogistics@gmail.com','email'],['marketing.gkelogistics@gmail.com','marketingEmail']])html=html.replace(value,`<a class="footer-contact-value" data-site-field="${key}" href="mailto:${value}">${value}</a>`);
  let phones=0;html=html.replace(/0879 089 789/g,()=>`<a class="footer-contact-value" data-site-field="${phones++?'salesPhone':'phone'}" href="tel:+84879089789">0879 089 789</a>`);
- const insert=`<p><svg class="footer-address-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Zm0-9a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg><strong>GKE Dong Anh:</strong><a class="footer-map-link" href="${paths[l].warehouse}?site=WH-02">${tr(l,'Dong Anh, Hanoi','Đông Anh, Hà Nội','河内东英')}</a></p>`;
+ const insert=`<p><svg class="footer-address-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Zm0-9a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg><strong>GKE Dong Anh:</strong><a class="footer-map-link" href="${dongAnhMapUrl}" target="_blank" rel="noopener noreferrer">${dongAnhAddress}</a></p>`;
  const addressEnd=html.indexOf('</div>',html.indexOf('GKE Da Nang:'));html=html.slice(0,addressEnd)+insert+html.slice(addressEnd);
  return translate(html,l);
 }

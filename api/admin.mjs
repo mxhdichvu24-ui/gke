@@ -1,3 +1,4 @@
+import {noteRange,validateNote,listNotes,writeNote,archiveNote} from '../server/notes.mjs';
 import {dashboardReport,localDay} from '../server/admin-report.mjs';
 import {validateWarehouseSettings} from '../src/warehouse-settings.mjs';
 import { randomBytes } from 'node:crypto';
@@ -54,6 +55,20 @@ export default async function handler(req,res) {
     if(action==='logout' && req.method==='POST'){clearSession(res);return json(res,200,{ok:true});}
     const user=await session(req);if(!user)return json(res,401,{code:'unauthorized'});
     if(!storageReady())return json(res,503,{code:'storage_unavailable'});
+    if(action==='notes') {
+      if(req.method==='GET'){
+        const range=noteRange(params.get('from'),params.get('to'));if(!range)return json(res,400,{code:'invalid_input'});
+        return json(res,200,{rows:await listNotes(range)});
+      }
+      if(!['POST','PATCH','DELETE'].includes(req.method))return json(res,405,{code:'method'});
+      const {data,error}=await parseBody(req);if(error)return json(res,error,{code:'invalid_input'});
+      const validId=typeof data?.id==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(data.id);
+      if(req.method!=='POST'&&!validId)return json(res,400,{code:'invalid_input'});
+      if(req.method==='DELETE'){const ok=await archiveNote(data.id,user.email);return json(res,ok?200:404,{ok});}
+      const value=validateNote(data);if(!value)return json(res,400,{code:'invalid_input'});
+      const row=await writeNote(req.method==='POST'?null:data.id,value,user.email);
+      return json(res,row?(req.method==='POST'?201:200):404,row?{row}:{code:'not_found'});
+    }
     if(action==='warehouse' && req.method==='GET') {
       const saved=await readSettings();
       return json(res,200,{value:saved.value.warehouse?.updatedAt?validateWarehouseSettings(saved.value.warehouse):defaultSettings.warehouse,revision:saved.revision});

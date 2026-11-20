@@ -73,11 +73,18 @@ mountUI(document.getElementById('ui'));
  const search=document.querySelector('.tb-search input');if(search){search.placeholder=({en:'Search GKE locations…',vi:'Tìm địa điểm GKE…',zh:'搜索 GKE 网点…'}[locale]);search.setAttribute('aria-label',search.placeholder);}
  const avatar=document.querySelector('.tb-user__avatar');if(avatar)avatar.innerHTML='<img src="/brand/icon.png" alt="GKE" style="width:32px;height:32px;object-fit:contain">';
  localizeWarehouse(document.getElementById('ui'));
- document.getElementById('simulation-toggle').hidden=true;
+ const pauseButton=document.getElementById('simulation-toggle');
+ pauseButton.hidden=layoutOnly;
+ pauseButton.setAttribute('title',({en:'Illustrative vehicle movement. Figures come from saved data.',vi:'Chuyển động minh họa. Số liệu lấy từ dữ liệu đã lưu.',zh:'车辆动效仅作演示；数值来自已保存的数据。'}[locale]));
+ pauseButton.setAttribute('aria-pressed','false');
+ let motionPaused=false;
+ pauseButton.addEventListener('click',()=>{motionPaused=!motionPaused;pauseButton.setAttribute('aria-pressed',String(motionPaused));pauseButton.textContent=motionPaused?({en:'Resume',vi:'Tiếp tục',zh:'继续'}[locale]):({en:'Pause',vi:'Tạm dừng',zh:'暂停'}[locale]);});
+ const detailButton=document.createElement('button');detailButton.className='gke-mobile-detail';detailButton.textContent=({en:'Location details',vi:'Thông tin',zh:'网点详情'}[locale]);detailButton.setAttribute('aria-controls','wt-detail');detailButton.setAttribute('aria-expanded','false');document.getElementById('ui').append(detailButton);
+ detailButton.addEventListener('click',()=>{const open=document.body.classList.toggle('gke-detail-open');detailButton.setAttribute('aria-expanded',String(open));detailButton.textContent=open?({en:'Close details',vi:'Đóng thông tin',zh:'收起详情'}[locale]):({en:'Location details',vi:'Thông tin',zh:'网点详情'}[locale]);});
 try {
  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
- const [{createScene},{createWorld},{createInteraction},{createCameraDirector}]=await Promise.all([
-  import('./three/scene.js'),import('./three/world.js'),import('./three/interaction.js'),import('./three/cameraDirector.js')
+ const [{createScene},{createWorld},{createInteraction},{createCameraDirector},{createSimulation}]=await Promise.all([
+  import('./three/scene.js'),import('./three/world.js'),import('./three/interaction.js'),import('./three/cameraDirector.js'),import('./state/simulation.js')
  ]);
  const app=createScene(document.getElementById('viewport'),{maxFps:layoutOnly?12:30});
  app.renderer.setPixelRatio(layoutOnly?1:Math.min(devicePixelRatio||1,1.5));
@@ -86,7 +93,8 @@ try {
  world.pickables.splice(0,world.pickables.length,...world.pickables.filter(object=>object.userData.ref?.type==='site'));
  const director=createCameraDirector(app,world);
  const interaction=createInteraction(app,world);
- app.onFrame((dt,elapsed)=>{interaction.update(dt,elapsed);director.update(dt,elapsed);});
+ const simulation=layoutOnly?null:createSimulation(world);
+ app.onFrame((dt,elapsed)=>{if(!motionPaused){simulation?.update(dt,elapsed);world.update(dt,elapsed);}interaction.update(dt,elapsed);director.update(dt,elapsed);});
  const visibility=()=>document.hidden?app.stop():app.start();document.addEventListener('visibilitychange',visibility);
  app.start();
  loading.remove();

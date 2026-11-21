@@ -1,10 +1,6 @@
-// Accept familiar formatting while keeping a single international phone value.
+// Preserve the customer's digits exactly, including leading zeroes.
 export function normalizePhone(value) {
-  if (typeof value !== 'string' || value.length > 40) return null;
-  let phone=value.trim().replace(/[\s().-]/g,'');
-  if (phone.startsWith('00')) phone='+'+phone.slice(2);
-  if (/^84\d{9,10}$/.test(phone)) phone='+'+phone;
-  if (/^0\d{9,10}$/.test(phone)) phone='+84'+phone.slice(1);
-  if (/^\+840\d{9,10}$/.test(phone)) phone='+84'+phone.slice(4);
-  return /^\+[1-9]\d{6,14}$/.test(phone) ? phone : null;
+  if (typeof value !== 'string') return null;
+  const phone=value.trim();
+  return /^[0-9]{1,13}$/.test(phone) ? phone : null;
 }

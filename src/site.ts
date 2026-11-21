@@ -1,3 +1,4 @@
+import {enhancePhoneInputs} from './phone-input';
 import {enhanceDestinations} from './destination-picker';
 import {defaultSettings} from './site-defaults.mjs';
 import {sendEnquiry,showEnquiryError,clearEnquiryErrors,showEnquirySuccess} from './contact-feedback';
@@ -75,6 +76,7 @@ for(const tab of document.querySelectorAll<HTMLElement>('.group-item'))tab.addEv
 document.querySelector<HTMLElement>('.group-item')?.click();
 
 enhanceDestinations();
+enhancePhoneInputs();
 
 // Same-origin administrator preview only; draft text is never persisted here.
 if(window.parent!==window && new URLSearchParams(location.search).get('admin-preview')==='1'){

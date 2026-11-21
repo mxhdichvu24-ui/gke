@@ -1,5 +1,5 @@
 const messages:Record<string,[string,string,string]>={
- phone:['Enter a phone number with a country code, for example +84 879 089 789.','Nhập số điện thoại kèm mã quốc gia, ví dụ +84 879 089 789.','请输入带国家代码的电话号码，例如 +84 879 089 789。'],
+ phone:['Enter a phone number using up to 13 digits.','Nhập số điện thoại chỉ gồm chữ số, tối đa 13 số.','请输入最多 13 位数字的电话号码。'],
  email:['Check the email address.','Kiểm tra lại địa chỉ email.','请检查电子邮箱地址。'],
  consent:['Please allow GKE to contact you about this request.','Vui lòng đồng ý để GKE liên hệ về yêu cầu này.','请同意 GKE 就本次申请与您联系。'],
  packages:['Check package measurements: up to 1,000 kg and 1,000 cm; weight has up to 3 decimal places, dimensions 2.','Kiểm tra số đo: tối đa 1.000 kg và 1.000 cm; cân nặng tối đa 3 số lẻ, kích thước 2 số lẻ.','请检查包裹数据：最多 1,000 千克和 1,000 厘米；重量保留最多 3 位小数，尺寸 2 位。'],

@@ -46,10 +46,11 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  assert.equal(filtered.total,0);assert.equal(filtered.scopeTotal,1);assert.equal(filtered.counts.contacted,1);
  assert.equal(filtered.scopeRows[0].status,'contacted');
  const output=await call(admin,'export','GET',undefined,cookie);assert.equal(output.status,200);assert.ok(output.text.includes("'=CSV safety test"));
- const parcel={...data,key:randomUUID(),phone:'+1 (202) 555-0123',service:'seller-us',packages:[{weight:'2,125',length:'30.25',width:'20',height:'10',count:2}]};
+ const parcel={...data,key:randomUUID(),phone:'0012025550123',service:'seller-us',packages:[{weight:'2,125',length:'30.25',width:'20',height:'10',count:2}]};
  assert.equal((await call(quote,'','POST',parcel)).status,201);
- const row=(await call(admin,'contacts','GET',undefined,cookie)).body().rows.find(row=>row.payload.phone==='+12025550123');
+ const row=(await call(admin,'contacts','GET',undefined,cookie)).body().rows.find(row=>row.payload.phone==='0012025550123');
  assert.equal(row.payload.packages[0].parcel.weightG,2125);assert.deepEqual(row.payload.packages[0].parcel.dimensions,[3025,2000,1000]);assert.equal(row.payload.packages[0].count,2);
+ assert.equal((await call(quote,'','POST',{...parcel,key:randomUUID(),phone:'12345678901234'})).status,400);
  const invalidPhone=await call(quote,'','POST',{...parcel,key:randomUUID(),phone:'+84'});assert.equal(invalidPhone.status,400);assert.equal(invalidPhone.body().field,'phone');
  const invalidParcel=await call(quote,'','POST',{...parcel,key:randomUUID(),packages:[{...parcel.packages[0],height:'0'}]});assert.equal(invalidParcel.status,400);assert.equal(invalidParcel.body().field,'packages');
  assert.equal(await version(),'3');

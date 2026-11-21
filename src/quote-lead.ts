@@ -1,3 +1,4 @@
+import {enhancePhoneInputs} from './phone-input';
 import {sendEnquiry,showEnquiryError,clearEnquiryErrors,showEnquirySuccess} from './contact-feedback';
 import {normalizePhone} from './contact-validation.mjs';
 const form=document.querySelector<HTMLFormElement>('#quote-lead-form')!;
@@ -9,6 +10,7 @@ const service=form.elements.namedItem('service') as HTMLSelectElement;
 function filter(){for(const option of service.options){const allowed=!option.dataset.route||option.dataset.route===route.value;option.hidden=!allowed;option.disabled=!allowed;}if(service.selectedOptions[0]?.disabled)service.value='';}
 try{const saved=JSON.parse(sessionStorage.getItem('gke:estimate')||'{}');for(const key of ['name','phone','weight','length','width','height','route'])if(saved[key]){const field=form.elements.namedItem(key) as HTMLInputElement;if(field)field.value=saved[key];}}catch{}
 const params=new URLSearchParams(location.search);if(params.get('route'))route.value=params.get('route')!;if(params.get('service'))service.value=params.get('service')!;filter();route.addEventListener('change',filter);
+enhancePhoneInputs();
 let key='',previous='';
 form.addEventListener('submit',async event=>{
  event.preventDefault();const button=form.querySelector('button')!;if(button.disabled)return;clearEnquiryErrors(form);

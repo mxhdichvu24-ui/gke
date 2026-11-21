@@ -1,3 +1,4 @@
+import {dongAnhAddress,dongAnhAddressForLocale} from '../gke-locations.mjs';
 import {routeCarriers,carriers} from './data/carriers.mjs';
 import {selectedRoute} from './data/selectedRoute.js';
 import './ui/styles.css';
@@ -48,7 +49,7 @@ function applyPublished(value){
  published.mode='manual';
  for(const saved of published.sites){
   const site=db.site(saved.id);if(!site)continue;
-  Object.assign(site,{name:saved.name,address:saved.address,status:saved.status,stock:saved.stock,capacity:saved.capacity,inventory:saved.inventory,reported:saved,kind:'GKE'});
+  Object.assign(site,{name:saved.name,address:saved.id==='WH-02'&&saved.address===dongAnhAddress?dongAnhAddressForLocale(locale):saved.address,status:saved.status,stock:saved.stock,capacity:saved.capacity,inventory:saved.inventory,reported:saved,kind:'GKE'});
  }
  const note=toolbar.querySelector('span');
  note.textContent=published.updatedAt?({en:'Figures updated',vi:'Số liệu cập nhật',zh:'数据更新'}[locale])+' · '+new Date(published.updatedAt).toLocaleString(locale,{timeZone:'Asia/Ho_Chi_Minh'}):({en:'No operational figures entered',vi:'Chưa nhập số liệu vận hành',zh:'尚未录入运营数据'}[locale]);

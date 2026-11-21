@@ -54,12 +54,17 @@ const menu=document.querySelector<HTMLButtonElement>('#menuToggle');menu?.addEve
   const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));menu.classList.toggle('active',open);document.querySelector('#nav')?.classList.toggle('show',open);
 });
 const scrollButton=document.querySelector<HTMLButtonElement>('#scrollTopBtn');scrollButton?.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
-// Defer the introduction video until it is visible, then pause off screen.
+// Prepare the video before scrolling reaches it; keep offscreen playback paused.
+const videoWarmup=new IntersectionObserver(entries=>entries.forEach(entry=>{
+ if(!entry.isIntersecting)return;
+ const video=entry.target as HTMLVideoElement;
+ video.preload='auto';video.load();videoWarmup.unobserve(video);
+}),{rootMargin:'900px 0px'});
 const videoObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{
  const video=entry.target as HTMLVideoElement;
  if(entry.isIntersecting){void video.play().catch(()=>{});}else video.pause();
 }),{threshold:0.15});
-for(const video of document.querySelectorAll('video'))videoObserver.observe(video);
+for(const video of document.querySelectorAll('video')){videoWarmup.observe(video);videoObserver.observe(video);}
 const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add('show','active');}));
 for(const node of document.querySelectorAll('.animate-show'))observer.observe(node);
 for(const tab of document.querySelectorAll<HTMLElement>('.group-item'))tab.addEventListener('click',()=>{

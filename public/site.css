@@ -61,3 +61,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .gke-form-success p{font-size:15px;line-height:1.6;margin:0 0 20px;max-width:430px}
 .gke-form-success button{border:1px solid #aad3bb;background:white;color:#17633f;border-radius:8px;padding:10px 18px;font:inherit;cursor:pointer}
 .gke-panel>[hidden]{display:none!important}
+/* Keep mobile parcel labels and their fields aligned in every language. */
+.form-row-banner>div{min-width:0}.form-row-banner label{display:block;white-space:nowrap}
+.why-media video{height:auto;aspect-ratio:1280/746;background:#123450}
+@media(max-width:600px){.estimate-box{padding:22px 18px}.form-row-banner label{font-size:12px;line-height:18px}.form-row-banner .estimate-unit{display:block}.form-row-banner input{min-width:0;padding:12px 8px}}

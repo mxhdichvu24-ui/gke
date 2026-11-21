@@ -1,4 +1,4 @@
-import {dongAnhMapUrl,dongAnhAddress} from '../src/gke-locations.mjs';
+import {dongAnhMapUrl,dongAnhAddressForLocale} from '../src/gke-locations.mjs';
 import {quoteRequestPage} from './quote-page.mjs';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
@@ -16,7 +16,7 @@ function optimizeImages(html){
  return html.replace(/<img\b[^>]*>/g,tag=>{
   const original=tag.match(/\bsrc="([^"]+)"/)?.[1],media=optimizedMedia[original];
   if(media)tag=tag.replace(`src="${original}"`,`src="${media.src}"`);
-  const eager=original?.includes('1775110180_69ce082465d2c')||original?.includes('6a8ff001df543');
+  const eager=original?.includes('/partners/')||original?.includes('1775110180_69ce082465d2c')||original?.includes('6a8ff001df543');
   if(!/\bloading=/.test(tag))tag=tag.replace('<img',`<img loading="${eager?'eager':'lazy'}"`);
   if(!/\bdecoding=/.test(tag))tag=tag.replace('<img','<img decoding="async"');
   if(original?.includes('1775110180_69ce082465d2c'))tag=tag.replace('<img','<img fetchpriority="high"');
@@ -49,7 +49,7 @@ function footer(l){
  html=html.replace('Hanoi Warehouse:', 'GKE Hoang Mai:').replace('HCM Warehouse:','GKE Ho Chi Minh:').replace('Da Nang Warehouse:','GKE Da Nang:');
  for(const [value,key]of [['cs2hangkelogistics@gmail.com','email'],['marketing.gkelogistics@gmail.com','marketingEmail']])html=html.replace(value,`<a class="footer-contact-value" data-site-field="${key}" href="mailto:${value}">${value}</a>`);
  let phones=0;html=html.replace(/0879 089 789/g,()=>`<a class="footer-contact-value" data-site-field="${phones++?'salesPhone':'phone'}" href="tel:+84879089789">0879 089 789</a>`);
- const insert=`<p><svg class="footer-address-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Zm0-9a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg><strong>GKE Dong Anh:</strong><a class="footer-map-link" href="${dongAnhMapUrl}" target="_blank" rel="noopener noreferrer">${dongAnhAddress}</a></p>`;
+ const insert=`<p><svg class="footer-address-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Zm0-9a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg><strong>GKE Dong Anh:</strong><a class="footer-map-link" href="${dongAnhMapUrl}" target="_blank" rel="noopener noreferrer">${dongAnhAddressForLocale(l)}</a></p>`;
  const addressEnd=html.indexOf('</div>',html.indexOf('GKE Da Nang:'));html=html.slice(0,addressEnd)+insert+html.slice(addressEnd);
  return translate(html,l);
 }
@@ -75,11 +75,11 @@ function landing(l){let main=source.slice(source.indexOf('<main>'),source.indexO
  main=main.replace(/<div class="form-group-banner">\s*<label>[^<]+<\/label>\s*<input type="tel" id="phone"[^>]+>\s*<\/div>/,`<div class="form-group-banner"><label for="estimate-phone">${tr(l,'Phone number','Số điện thoại','联系电话')}</label><input type="tel" id="estimate-phone" value="+84 " autocomplete="tel" maxlength="40" placeholder="${tr(l,'Enter your phone number','Nhập số điện thoại','请输入联系电话')}"></div>`)
  .replace(/<button type="button" class="btn-calc" onclick="handleCalc\(\)">[\s\S]*?<\/button>/,`<button type="button" class="btn-calc" id="landing-estimate">${labels[l].quote}</button>`)
  .replace('<div class="price" aria-live="polite">$0.00</div>','')
- .replace(/<label>([^<]+)<\/label>\s*(<input type="number" id="(weight|length|width|height)")/g,(_,label,input,key)=>`<label for="${key}">${label} (${key==='weight'?'kg':'cm'})</label>${input}`)
+ .replace(/<label>([^<]+)<\/label>\s*(<input type="number" id="(weight|length|width|height)")/g,(_,label,input,key)=>`<label for="${key}">${label} <span class="estimate-unit">(${key==='weight'?'kg':'cm'})</span></label>${input}`)
  .replace(/type="number" id="(weight|length|width|height)"[^>]+/g,(_,key)=>`type="text" id="${key}" inputmode="decimal" autocomplete="off" placeholder="${key==='weight'?'0 kg':'0 cm'}"`)
  .replace(/href="https:\/\/gkelogistics.com\/contact"/g,`href="${paths[l].contact}"`)
  .replace('</main>',`${warehousePromo(l)}</main>`);
- main=main.replaceAll('https://gkelogistics.com/videos/upload/gke_intro.mp4','/original/videos/gke-intro.mp4').replace('<video autoplay loop muted playsinline controls>','<video preload="none" loop muted playsinline controls>');
+ main=main.replaceAll('https://gkelogistics.com/videos/upload/gke_intro.mp4','/original/videos/gke-intro.mp4').replace('<video autoplay loop muted playsinline controls>','<video preload="metadata" poster="/media/gke-intro-poster.webp" width="1280" height="746" loop muted playsinline controls>');
  main=main.replace('<div class="estimate-footer">',`<div id="landing-estimate-result" role="status"></div><div class="estimate-footer">`);
  return main;
 }

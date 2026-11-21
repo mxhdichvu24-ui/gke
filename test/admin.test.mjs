@@ -1,5 +1,5 @@
 import{test}from'node:test';import assert from'node:assert/strict';import{mkdtemp,rm}from'node:fs/promises';import{tmpdir}from'node:os';import{join}from'node:path';import{randomBytes,randomUUID}from'node:crypto';
-import admin from'../api/admin.mjs';import quote from'../api/quote-requests.mjs';
+import admin,{filterContacts} from'../api/admin.mjs';import quote from'../api/quote-requests.mjs';
 import{defaultSettings}from'../src/site-defaults.mjs';
 function call(handler,action,method='GET',body,cookie=''){
  let status,headers={};let resolve;const done=new Promise(r=>resolve=r);
@@ -39,6 +39,8 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  const again=await call(quote,'','POST',data);assert.equal(again.body().reference,received.body().reference);
  assert.equal(await version(),'1');
  const contacts=await call(admin,'contacts','GET',undefined,cookie);assert.equal(contacts.body().total,1);
+ assert.equal((await call(admin,'export&from=2026-02-30','GET',undefined,cookie)).status,400);
+ assert.equal((await call(admin,'contacts&from=2026-11-21&to=2026-11-20','GET',undefined,cookie)).status,400);
  assert.equal(contacts.body().scopeRows.length,1);
  assert.equal((await call(admin,'contacts','PATCH',{reference:received.body().reference,status:'contacted',notes:'Local test update'},cookie)).status,200);
  assert.equal(await version(),'2');
@@ -70,4 +72,11 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password:'incorrect'})).status,401);
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password})).status,200);
  }finally{await rm(directory,{recursive:true,force:true});delete process.env.GKE_LOCAL_DATA;delete process.env.GKE_LOCAL_DEV;}
+});
+
+test('enquiry date filters include entire selected days in Vietnam time',()=>{
+ const rows=['2026-11-19T16:59:59Z','2026-11-19T17:00:00Z','2026-11-20T16:59:59Z','2026-11-20T17:00:00Z'].map((created_at,i)=>({reference:String(i),created_at,payload:{},status:'received'}));
+ assert.deepEqual(filterContacts(rows,new URLSearchParams('from=2026-11-20&to=2026-11-20')).map(r=>r.reference),['1','2']);
+ assert.deepEqual(filterContacts(rows,new URLSearchParams('from=2026-11-21')).map(r=>r.reference),['3']);
+ assert.deepEqual(filterContacts(rows,new URLSearchParams('to=2026-11-19')).map(r=>r.reference),['0']);
 });

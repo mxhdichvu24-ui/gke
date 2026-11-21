@@ -107,6 +107,9 @@ export default async function handler(req,res) {
       if(action==='dashboard') {
         return json(res,200,{...dashboardReport(all,params),storage:localMode()?'local':'supabase'});
       }
+      const from=params.get('from'),to=params.get('to');
+      const validDate=value=>!value||(/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value);
+      if(!validDate(from)||!validDate(to)||(from&&to&&from>to))return json(res,400,{code:'invalid_date_range'});
       const rows=filterContacts(all,params);
       if(action==='contacts') {
         const page=Math.max(1,Math.floor(Number(params.get('page'))||1));

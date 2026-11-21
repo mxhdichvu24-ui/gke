@@ -26,7 +26,7 @@ function optimizeImages(html){
 const maps={vi:JSON.parse(readFileSync('content/vi.json','utf8')),zh:JSON.parse(readFileSync('content/zh.json','utf8'))};
 const esc=v=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 const tr=(l,en,vi,zh)=>l==='vi'?vi:l==='zh'?zh:en;
-const languageLinks=(l,page)=>Object.keys(paths).map(k=>`<a href="${paths[k][page]}" lang="${k}" hreflang="${k}" ${k===l?'aria-current="page"':''}>${{en:'EN',vi:'VI',zh:'中文'}[k]}</a>`).join('');
+const languageLinks=(l,page,mobile=false)=>Object.keys(paths).map(k=>`<a href="${paths[k][page]}" lang="${k}" hreflang="${k}" ${k===l?'aria-current="page"':''}>${(mobile?{en:'English',vi:'Tiếng Việt',zh:'中文'}:{en:'EN',vi:'VI',zh:'中文'})[k]}</a>`).join('');
 function translate(html,l){
  const map=maps[l];if(!map)return html;
  return html.split(/(<[^>]+>)/g).map(part=>{
@@ -35,7 +35,7 @@ function translate(html,l){
   const value=t(part);return value?part.replace(/^(\s*)[\s\S]*?(\s*)$/,(_,a,b)=>a+esc(value)+b):part;
  }).join('');
 }
-function header(l,page){return `<header class="header show"><div class="logo"><a href="${paths[l].home}"><img src="/original/images/upload/6a8ff001df543.png" alt="GKE Logistics"></a></div><button class="menu-toggle" id="menuToggle" aria-label="${tr(l,'Open menu','Mở menu','打开菜单')}" aria-controls="nav" aria-expanded="false"><span></span></button><nav class="nav" id="nav"><a href="${paths[l].home}">${labels[l].home}</a><a href="${paths[l].home}#about-us">${tr(l,'About Us','Giới thiệu','关于我们')}</a><a href="${paths[l].services}">${labels[l].services}</a><a href="${paths[l].warehouse}">${labels[l].warehouse}</a><a href="${paths[l].track}">${tr(l,'Track','Tra cứu','查询')}</a><a href="${paths[l].contact}">${labels[l].contact}</a><div class="mobile-lang gke-lang">${languageLinks(l,page)}</div></nav><div class="right"><div class="lang gke-lang">${languageLinks(l,page)}</div></div></header>`;}
+function header(l,page){return `<header class="header show"><div class="logo"><a href="${paths[l].home}"><img src="/original/images/upload/6a8ff001df543.png" alt="GKE Logistics"></a></div><button class="menu-toggle" id="menuToggle" aria-label="${tr(l,'Open menu','Mở menu','打开菜单')}" aria-controls="nav" aria-expanded="false"><span></span></button><nav class="nav" id="nav"><a href="${paths[l].home}">${labels[l].home}</a><a href="${paths[l].home}#about-us">${tr(l,'About Us','Giới thiệu','关于我们')}</a><a href="${paths[l].services}">${labels[l].services}</a><a href="${paths[l].warehouse}">${labels[l].warehouse}</a><a href="${paths[l].track}">${tr(l,'Track','Tra cứu','查询')}</a><a href="${paths[l].contact}">${labels[l].contact}</a><div class="mobile-lang gke-lang" aria-label="Language">${languageLinks(l,page,true)}</div></nav><div class="right"><div class="lang gke-lang">${languageLinks(l,page)}</div></div></header>`;}
 function footer(l){
  let html=source.slice(source.indexOf('<footer class="footer">'),source.indexOf('</footer>')+9);
  html=html.replace('class="company-slogan"','class="company-slogan" data-site-content="heroDescription"').replace('alt="logo"','alt="GKE Logistics"');

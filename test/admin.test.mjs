@@ -53,6 +53,19 @@ test('admin authentication, versioned settings, idempotent contact capture and C
  const invalidPhone=await call(quote,'','POST',{...parcel,key:randomUUID(),phone:'+84'});assert.equal(invalidPhone.status,400);assert.equal(invalidPhone.body().field,'phone');
  const invalidParcel=await call(quote,'','POST',{...parcel,key:randomUUID(),packages:[{...parcel.packages[0],height:'0'}]});assert.equal(invalidParcel.status,400);assert.equal(invalidParcel.body().field,'packages');
  assert.equal(await version(),'3');
+ const patch={reference:row.reference,status:'contacted',notes:'Carrier confirmed',carrier:'uniuni'};
+ assert.equal((await call(admin,'contacts','PATCH',patch)).status,401);
+ assert.equal((await call(admin,'contacts','PATCH',{...patch,carrier:'evri'},cookie)).status,400);
+ assert.equal((await call(admin,'contacts','PATCH',{...patch,carrier:{key:'uniuni'}},cookie)).status,400);
+ assert.equal((await call(admin,'contacts','PATCH',patch,cookie)).status,200);
+ const assigned=(await call(admin,'contacts&carrier=uniuni&route=US','GET',undefined,cookie)).body();
+ assert.equal(assigned.total,1);assert.equal(assigned.rows[0].payload.carrier,'uniuni');
+ assert.deepEqual(assigned.rows[0].payload.packages,row.payload.packages);assert.equal(assigned.rows[0].payload.phone,row.payload.phone);
+ assert.equal((await call(admin,'contacts&carrier=uniuni&route=UK','GET',undefined,cookie)).body().total,0);
+ assert.ok((await call(admin,'export&carrier=uniuni','GET',undefined,cookie)).text.includes('UniUni'));
+ assert.equal((await call(admin,'contacts','PATCH',{...patch,carrier:''},cookie)).status,200);
+ assert.equal((await call(admin,'contacts&carrier=unassigned','GET',undefined,cookie)).body().total,2);
+
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password:'incorrect'})).status,401);
  assert.equal((await call(admin,'login','POST',{email:'qa@example.test',password})).status,200);
  }finally{await rm(directory,{recursive:true,force:true});delete process.env.GKE_LOCAL_DATA;delete process.env.GKE_LOCAL_DEV;}

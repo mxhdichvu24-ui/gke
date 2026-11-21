@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { defaultSettings } from '../src/site-defaults.mjs';
+import {routeCarriers} from '../src/warehouse/data/carriers.mjs';
 
 let queue = Promise.resolve();
 const empty = () => ({settings: {value: structuredClone(defaultSettings), revision: 0}, contacts: [], limits: {}, admin: null});
@@ -98,14 +99,26 @@ export async function listContacts() {
 }
 
 export async function updateContact(reference, patch) {
+  const changes=row=>{
+    const {carrier,...fields}=patch;
+    if(carrier===undefined)return fields;
+    if(typeof carrier!=='string'||(carrier!==''&&!routeCarriers[row.payload.route]?.includes(carrier)))throw new Error('invalid_carrier');
+    return {...fields,payload:{...row.payload,carrier}};
+  };
   if (localMode()) return localTransaction(data => {
     const row = data.contacts.find(item => item.reference === reference);
     if (!row) return null;
-    Object.assign(row, patch);
+    Object.assign(row, changes(row));
     data.contactVersion=(data.contactVersion||0)+1;
     return row;
   });
-  const rows = await supabase(`gke_quote_requests?reference=eq.${encodeURIComponent(reference)}`, {method:'PATCH', body:patch, prefer:'return=representation'});
+  let fields=patch;
+  if(patch.carrier!==undefined){
+    const current=await supabase(`gke_quote_requests?reference=eq.${encodeURIComponent(reference)}&select=payload&limit=1`);
+    if(!current[0])return null;
+    fields=changes(current[0]);
+  }
+  const rows = await supabase(`gke_quote_requests?reference=eq.${encodeURIComponent(reference)}`, {method:'PATCH', body:fields, prefer:'return=representation'});
   return rows[0] || null;
 }
 

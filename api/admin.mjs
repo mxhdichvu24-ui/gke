@@ -1,3 +1,4 @@
+import {carriers} from '../src/warehouse/data/carriers.mjs';
 import {noteRange,validateNote,listNotes,writeNote,archiveNote} from '../server/notes.mjs';
 import {dashboardReport,localDay} from '../server/admin-report.mjs';
 import {validateWarehouseSettings} from '../src/warehouse-settings.mjs';
@@ -14,14 +15,14 @@ export function filterContacts(rows,params) {
   return rows.filter(row=> {
     const p=row.payload;
     return (!q || [p.name,p.email,p.phone,p.message,row.reference].some(v=>String(v||'').toLowerCase().includes(q))) &&
-      (!status||row.status===status) && (!params.get('service')||p.service===params.get('service')) && (!from||localDay(row.created_at)>=from) && (!to||localDay(row.created_at)<=to);
+      (!status||row.status===status) && (!params.get('service')||p.service===params.get('service')) && (!params.get('route')||p.route===params.get('route')) && (!params.get('carrier')||(params.get('carrier')==='unassigned'?!p.carrier:p.carrier===params.get('carrier'))) && (!from||localDay(row.created_at)>=from) && (!to||localDay(row.created_at)<=to);
   });
 }
 export function contactsCsv(rows) {
   const escape=value=> {let s=String(value??'');if(/^[\s]*[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};
   return '\uFEFF'+[
-    ['Reference','Received at (UTC)','Name','Phone','Email','Source','Destination','Service','Status','Message','Notes','Packages (JSON)'],
-    ...rows.map(({reference,created_at,payload:p,status,notes})=>[reference,created_at,p.name,p.phone,p.email,p.source,p.route,p.service,status,p.message,notes,JSON.stringify(p.packages||[])])
+    ['Reference','Received at (UTC)','Name','Phone','Email','Source','Destination','Service','Carrier','Status','Message','Notes','Packages (JSON)'],
+    ...rows.map(({reference,created_at,payload:p,status,notes})=>[reference,created_at,p.name,p.phone,p.email,p.source,p.route,p.service,carriers[p.carrier]?.name||'',status,p.message,notes,JSON.stringify(p.packages||[])])
   ].map(row=>row.map(escape).join(',')).join('\r\n');
 }
 export default async function handler(req,res) {
@@ -96,7 +97,9 @@ export default async function handler(req,res) {
     if(action==='contacts' && req.method==='PATCH') {
       const {data,error}=await parseBody(req);if(error)return json(res,error,{code:'invalid_input'});
       if(!/^[a-f0-9-]{36}$/.test(data?.reference||'')||!['received','contacted','qualified','closed','spam'].includes(data.status)||typeof data.notes!=='string'||data.notes.length>3000)return json(res,400,{code:'invalid_input'});
-      const row=await updateContact(data.reference,{status:data.status,notes:data.notes});
+      let row;
+      try{row=await updateContact(data.reference,{status:data.status,notes:data.notes,...(data.carrier!==undefined?{carrier:data.carrier}:{})});}
+      catch(error){if(error.message==='invalid_carrier')return json(res,400,{code:'invalid_input'});throw error;}
       return json(res,row?200:404,row?{ok:true}:{code:'not_found'});
     }
     if((action==='contacts'||action==='export'||action==='dashboard')&&req.method==='GET') {

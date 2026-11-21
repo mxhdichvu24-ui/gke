@@ -1,9 +1,10 @@
+import {carriers} from '../src/warehouse/data/carriers.mjs';
 import {zipSync,strToU8} from 'fflate';
 const escape=value=>String(value??'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g,'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&apos;');
 export function contactTable(rows,vi=false){
  const statuses={received:'Mới',contacted:'Đang liên hệ',qualified:'Tiềm năng',closed:'Hoàn tất',spam:'Không phù hợp'};
- return [vi?['Mã yêu cầu','Tiếp nhận (giờ Việt Nam)','Họ và tên','Điện thoại','Email','Nguồn','Điểm đến','Dịch vụ','Trạng thái','Nhu cầu','Ghi chú nội bộ','Kiện hàng (JSON)']:['Reference','Received (Vietnam time)','Name','Phone','Email','Source','Destination','Service','Status','Message','Internal notes','Packages (JSON)'],
- ...rows.map(({reference,created_at,payload:p,status,notes})=>[reference,new Date(created_at).toLocaleString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh'}),p.name,p.phone,p.email,p.source,p.route,p.service,vi?statuses[status]||status:status,p.message,notes,JSON.stringify(p.packages||[])])];
+ return [vi?['Mã yêu cầu','Tiếp nhận (giờ Việt Nam)','Họ và tên','Điện thoại','Email','Nguồn','Điểm đến','Dịch vụ','Hãng vận chuyển','Trạng thái','Nhu cầu','Ghi chú nội bộ','Kiện hàng (JSON)']:['Reference','Received (Vietnam time)','Name','Phone','Email','Source','Destination','Service','Carrier','Status','Message','Internal notes','Packages (JSON)'],
+ ...rows.map(({reference,created_at,payload:p,status,notes})=>[reference,new Date(created_at).toLocaleString('sv-SE',{timeZone:'Asia/Ho_Chi_Minh'}),p.name,p.phone,p.email,p.source,p.route,p.service,carriers[p.carrier]?.name||'',vi?statuses[status]||status:status,p.message,notes,JSON.stringify(p.packages||[])])];
 }
 export function contactsXlsx(rows,vi=false){
  const table=contactTable(rows,vi);
@@ -13,12 +14,12 @@ export function contactsXlsx(rows,vi=false){
  '_rels/.rels':'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
  'xl/workbook.xml':'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="GKE enquiries" sheetId="1" r:id="rId1"/></sheets></workbook>',
  'xl/_rels/workbook.xml.rels':'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>',
- 'xl/worksheets/sheet1.xml':`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="12" width="25" customWidth="1"/></cols><sheetData>${xml}</sheetData><autoFilter ref="A1:L${table.length}"/></worksheet>`
+ 'xl/worksheets/sheet1.xml':`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="13" width="25" customWidth="1"/></cols><sheetData>${xml}</sheetData><autoFilter ref="A1:M${table.length}"/></worksheet>`
  };
  return Buffer.from(zipSync(Object.fromEntries(Object.entries(files).map(([path,content])=>[path,strToU8('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+content)])),{level:1}));
 }
 export function contactsPrint(rows,params){
  const vi=params.get('lang')==='vi',table=contactTable(rows,vi);
- const filters=['from','to','q','status','service'].filter(key=>params.get(key)).map(key=>`${key}: ${params.get(key)}`).join(' · ');
+ const filters=['from','to','q','status','service','route','carrier'].filter(key=>params.get(key)).map(key=>`${key}: ${params.get(key)}`).join(' · ');
  return `<!doctype html><html lang="${vi?'vi':'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>GKE Logistics — ${vi?'Báo cáo liên hệ':'Enquiry report'}</title><style>body{font:14px Arial,sans-serif;color:#142d48;margin:28px}h1{font-size:22px}p{color:#53667b}button{background:#0865ed;color:white;border:0;border-radius:7px;padding:12px 18px;cursor:pointer}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #ccd7e5;padding:7px;vertical-align:top;overflow-wrap:anywhere;white-space:pre-wrap}th{background:#eaf2fc;text-align:left}thead{display:table-header-group}@page{size:A4 landscape;margin:10mm}@media print{.print-controls{display:none}body{margin:0}table{font-size:8px}th,td{padding:4px}}</style><script src="/admin-print.js" defer></script></head><body><div class="print-controls"><button id="print-export">${vi?'In / Lưu PDF':'Print / Save PDF'}</button><p>${vi?'Chọn “Lưu dưới dạng PDF” trong cửa sổ in để tải file PDF.':'Choose “Save as PDF” in the print window to download a PDF.'}</p></div><h1>GKE Logistics · ${vi?'Báo cáo liên hệ':'Enquiry report'}</h1><p>${escape(filters)} · ${rows.length} ${vi?'yêu cầu':'enquiries'} · UTC+7</p><table><thead><tr>${table[0].map(value=>`<th>${escape(value)}</th>`).join('')}</tr></thead><tbody>${table.slice(1).map(row=>`<tr>${row.map(value=>`<td>${escape(value)}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
 }

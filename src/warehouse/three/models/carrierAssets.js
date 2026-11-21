@@ -34,6 +34,13 @@ function applyBrand(model,brand,image){
  model?.traverse(node=>{
   if(!node.isMesh)return;
   if(/decal|side_carrier_logo|shipping_label_texture/.test(node.name)){
+   // Side carton decals were authored facing inward; orient their UVs for the outside.
+   if(node.name==='side_carrier_logo'){
+    node.geometry=node.geometry.clone();
+    const uv=node.geometry.attributes.uv;
+    for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
+    uv.needsUpdate=true;
+   }
    node.geometry.computeBoundingBox();const size=node.geometry.boundingBox.getSize(new THREE.Vector3());
    const aspect=Math.max(size.x,size.z)/Math.max(size.y,.01);
    node.material=new THREE.MeshBasicMaterial({map:logoTexture(image,brand,aspect,/shipping_label_texture/.test(node.name)),toneMapped:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2});

@@ -24,6 +24,8 @@ export function showEnquiryError(form:HTMLFormElement,status:Element,error:any){
 }
 export function clearEnquiryErrors(form:HTMLFormElement){for(const field of form.querySelectorAll('[aria-invalid]'))field.removeAttribute('aria-invalid');}
 export function showEnquirySuccess(form:HTMLFormElement,status:Element){
+ const quote=form.id==='quote-lead-form';
+ const vi=document.documentElement.lang==='vi',zh=document.documentElement.lang==='zh';
  const copy=document.documentElement.lang==='vi'
   ?['Gửi yêu cầu thành công!','GKE đã nhận thông tin và sẽ sớm liên hệ tư vấn cho bạn.','Gửi yêu cầu khác']
   :document.documentElement.lang==='zh'
@@ -32,7 +34,9 @@ export function showEnquirySuccess(form:HTMLFormElement,status:Element){
  const hidden=Array.from(form.children).filter(child=>child!==status).map(child=>({element:child as HTMLElement,wasHidden:(child as HTMLElement).hidden}));
  hidden.forEach(({element})=>{element.hidden=true;});
  status.classList.add('gke-form-success');status.setAttribute('tabindex','-1');
- status.innerHTML=`<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="#11975b"/><path d="m13 24 8 8 15-16" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><h2>${copy[0]}</h2><p>${copy[1]}</p><button type="button">${copy[2]}</button>`;
+ const check=`<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="#11975b"/><path d="m13 24 8 8 15-16" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+ const next=vi?[['Xem lại thông tin','Đội ngũ GKE tiếp nhận nhu cầu và thông tin kiện hàng.'],['Liên hệ tư vấn','GKE trao đổi phương án vận chuyển và xác nhận báo giá.']]:zh?[['查看申请','GKE 团队将查看您的运输需求和包裹信息。'],['联系并报价','我们将联系您，讨论运输方案并确认报价。']]:[['Review your request','Our team reviews your shipping needs and package details.'],['Discuss your quote','We contact you to discuss the shipping options and confirm a quote.']];
+ status.innerHTML=quote?`<div class="quote-success-topline"><span class="quote-success-brand"><img src="/brand/gke-logo-transparent-navy.png" alt="GKE Logistics" width="2170" height="725"><small>${vi?'BÁO GIÁ':zh?'报价咨询':'QUOTATION'}</small></span><span class="quote-success-state"><i></i>${vi?'Đã tiếp nhận':zh?'已收到':'Received'}</span></div><div class="quote-success-content"><div class="quote-success-hero">${check}<div><span class="quote-success-eyebrow">${vi?'CẢM ƠN BẠN ĐÃ CHỌN GKE':zh?'感谢您选择 GKE':'THANK YOU FOR CHOOSING GKE'}</span><h2>${copy[0]}</h2><p>${copy[1]}</p></div></div><div class="quote-success-next"><span>${vi?'BƯỚC TIẾP THEO':zh?'接下来':'WHAT HAPPENS NEXT'}</span><ol>${next.map(([title,description],index)=>`<li><span>0${index+1}</span><div><h3>${title}</h3><p>${description}</p></div></li>`).join('')}</ol></div></div><div class="quote-success-footer"><span>${vi?'Bạn có lô hàng khác cần tư vấn?':zh?'还有其他货件需要咨询？':'Have another shipment in mind?'}</span><button type="button">${copy[2]} <span aria-hidden="true">→</span></button></div>`:`${check}<h2>${copy[0]}</h2><p>${copy[1]}</p><button type="button">${copy[2]}</button>`;
  status.querySelector('button')!.addEventListener('click',()=>{
   hidden.forEach(({element,wasHidden})=>{element.hidden=wasHidden;});status.classList.remove('gke-form-success');status.removeAttribute('tabindex');status.textContent='';form.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
  });

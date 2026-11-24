@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual, scrypt as scryptCallback } from 'node:crypto';
 import { promisify } from 'node:util';
 import { localAdmin, localMode, consumeLimit } from './storage.mjs';
+import {listDocuments} from './documents.mjs';
 
 const scrypt = promisify(scryptCallback);
 const equal = (a,b) => { const x=Buffer.from(a); const y=Buffer.from(b); return x.length === y.length && timingSafeEqual(x,y); };
@@ -34,8 +35,8 @@ export function fingerprint(req, secret) {
   return createHmac('sha256',secret).update(String(address).split(',')[0].trim()).digest('hex');
 }
 const cookieName = () => localMode() ? 'gke_admin' : '__Host-gke_admin';
-export function setSession(res, config) {
-  const payload=Buffer.from(JSON.stringify({email:config.email, exp:Date.now()+8*60*60*1000})).toString('base64url');
+export function setSession(res, config,identity={email:config.email,role:'owner'}) {
+  const payload=Buffer.from(JSON.stringify({email:identity.email,version:identity.version??null, exp:Date.now()+8*60*60*1000})).toString('base64url');
   const token=payload+'.'+createHmac('sha256',config.secret).update(payload).digest('base64url');
   res.setHeader('Set-Cookie',`${cookieName()}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=28800${localMode()?'':'; Secure'}`);
 }
@@ -51,9 +52,19 @@ export async function session(req) {
   if (!payload||!signature || !equal(signature,createHmac('sha256',config.secret).update(payload).digest('base64url'))) return null;
   try {
     const data=JSON.parse(Buffer.from(payload,'base64url').toString());
-    return data.email===config.email && Number.isFinite(data.exp) && data.exp>Date.now() ? {email:data.email} : null;
+    if(!Number.isFinite(data.exp)||data.exp<=Date.now())return null;
+    if(data.email===config.email)return{email:data.email,role:'owner'};
+    const row=(await listDocuments('staff')).find(row=>row.value.email===data.email&&row.value.enabled);
+    return row&&row.revision===data.version?{email:data.email,role:row.value.role}:null;
   } catch { return null; }
 }
+export async function authenticate(email,password,config){
+ if(typeof email!=='string')return null;email=email.trim().toLowerCase();
+ if(email===config.email)return await checkPassword(password,config.passwordHash)?{email,role:'owner'}:null;
+ const row=(await listDocuments('staff')).find(row=>row.value.email===email&&row.value.enabled);
+ return row&&await checkPassword(password,row.value.passwordHash)?{email,role:row.value.role,version:row.revision}:null;
+}
+export const hasRole=(user,...roles)=>Boolean(user&&roles.includes(user.role||'owner'));
 export async function allowLogin(req, config) {
   return consumeLimit('login:'+fingerprint(req,config.secret),8,900);
 }

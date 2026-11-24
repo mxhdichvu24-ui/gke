@@ -54,6 +54,10 @@ fetch('/api/site-settings').then(r=>r.ok?r.json():defaultSettings).then(applySet
 const menu=document.querySelector<HTMLButtonElement>('#menuToggle');menu?.addEventListener('click',()=>{
   const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));menu.classList.toggle('active',open);document.querySelector('#nav')?.classList.toggle('show',open);
 });
+function closeMenu(){menu?.setAttribute('aria-expanded','false');menu?.classList.remove('active');document.querySelector('#nav')?.classList.remove('show');}
+document.querySelector('#nav')?.addEventListener('click',event=>{if((event.target as Element).closest('a'))closeMenu();});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu?.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus();}});
+window.matchMedia('(min-width:1200px)').addEventListener('change',closeMenu);
 const scrollButton=document.querySelector<HTMLButtonElement>('#scrollTopBtn');scrollButton?.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 // Prepare the video before scrolling reaches it; keep offscreen playback paused.
 const videoWarmup=new IntersectionObserver(entries=>entries.forEach(entry=>{
@@ -91,3 +95,7 @@ if(window.parent!==window && new URLSearchParams(location.search).get('admin-pre
 import '../public/original/css/frontend/global_frontend.css';
 import '../public/original/swiper-bundle.min.css';
 import '../public/site.css';
+
+import '../public/navigation.css';
+
+import '../public/scrollbars.css';

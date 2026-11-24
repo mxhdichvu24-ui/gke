@@ -3,7 +3,15 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "headers": [
-    {"source":"/media/(.*)","headers":[{"key":"Cache-Control","value":"public, max-age=31536000, immutable"}]},
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
@@ -37,5 +45,31 @@
   ],
   "regions": [
     "syd1"
+  ],
+  "rewrites": [
+    {
+      "source": "/vi/kien-thuc",
+      "destination": "/api/articles?lang=vi"
+    },
+    {
+      "source": "/vi/kien-thuc/:slug",
+      "destination": "/api/articles?lang=vi&slug=:slug"
+    },
+    {
+      "source": "/resources",
+      "destination": "/api/articles?lang=en"
+    },
+    {
+      "source": "/resources/:slug",
+      "destination": "/api/articles?lang=en&slug=:slug"
+    },
+    {
+      "source": "/zh/resources",
+      "destination": "/api/articles?lang=zh"
+    },
+    {
+      "source": "/zh/resources/:slug",
+      "destination": "/api/articles?lang=zh&slug=:slug"
+    }
   ]
 }

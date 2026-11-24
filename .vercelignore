@@ -1,0 +1,10 @@
+.gke-local
+.env*
+!.env.example
+node_modules
+dist
+.implementation-state.json
+.preview-example.json
+public/tu-van-thu.html
+public/service-guide.css
+public/service-guide.mjs

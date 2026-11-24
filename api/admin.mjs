@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { json,parseBody } from '../server/http.mjs';
 import { defaultSettings,validateSettings } from '../src/site-defaults.mjs';
 import { storageReady,localMode,localTransaction,readSettings,saveSettings,listContacts,updateContact,contactVersion } from '../server/storage.mjs';
-import { credentials,session,sameOrigin,hashPassword,checkPassword,setSession,clearSession,allowLogin,setupAllowed } from '../server/auth.mjs';
+import { credentials,session,sameOrigin,hashPassword,authenticate,hasRole,setSession,clearSession,allowLogin,setupAllowed } from '../server/auth.mjs';
 
 export function filterContacts(rows,params) {
   const q=(params.get('q')||'').trim().toLowerCase();
@@ -49,12 +49,13 @@ export default async function handler(req,res) {
       const config=await credentials();if(!config||!storageReady())return json(res,503,{code:'admin_unconfigured'});
       if(!await allowLogin(req,config))return json(res,429,{code:'rate_limited'});
       const {data,error}=await parseBody(req);if(error)return json(res,error,{code:'invalid_input'});
-      const valid=await checkPassword(data?.password,config.passwordHash);
-      if(!valid||typeof data?.email!=='string'||data.email.trim().toLowerCase()!==config.email)return json(res,401,{code:'invalid_credentials'});
-      setSession(res,config);return json(res,200,{user:{email:config.email}});
+      const identity=await authenticate(data?.email,data?.password,config);
+      if(!identity)return json(res,401,{code:'invalid_credentials'});
+      setSession(res,config,identity);return json(res,200,{user:{email:identity.email,role:identity.role}});
     }
     if(action==='logout' && req.method==='POST'){clearSession(res);return json(res,200,{ok:true});}
     const user=await session(req);if(!user)return json(res,401,{code:'unauthorized'});
+    if(!hasRole(user,'owner')&&(!['contacts','export','dashboard','changes','notes'].includes(action)||!hasRole(user,'sales')))return json(res,403,{code:'forbidden'});
     if(!storageReady())return json(res,503,{code:'storage_unavailable'});
     if(action==='changes'&&req.method==='GET')return json(res,200,{version:await contactVersion()});
     if(action==='notes') {
